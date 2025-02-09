@@ -1,0 +1,31 @@
+Imported /users/aflemis1/sink/PRJEB3232/manifest.tsv as SingleEndFastqManifestPhred33V2 to /users/aflemis1/sink/PRJEB3232/qiime2_output/single-end-demux.qza
+Saved FeatureTable[Frequency] to: /users/aflemis1/sink/PRJEB3232/qiime2_output/dada2/table.qza
+Saved FeatureData[Sequence] to: /users/aflemis1/sink/PRJEB3232/qiime2_output/dada2/representative_sequences.qza
+Saved SampleData[DADA2Stats] to: /users/aflemis1/sink/PRJEB3232/qiime2_output/dada2/denoising_stats.qza
+Plugin error from feature-classifier:
+
+  [Errno 28] No space left on device
+
+Debug info has been saved to /tmp/qiime2-q2cli-err-d0eta6t6.log
+Exported /users/aflemis1/sink/PRJEB3232/qiime2_output/dada2/representative_sequences.qza as DNASequencesDirectoryFormat to directory /users/aflemis1/sink/PRJEB3232/qiime2_output/dada2/representative_sequences
+Usage: qiime tools export [OPTIONS]
+
+  Exporting extracts (and optionally transforms) data stored inside an
+  Artifact or Visualization. Note that Visualizations cannot be transformed
+  with --output-format
+
+Options:
+  --input-path ARTIFACT/VISUALIZATION
+                        Path to file that should be exported        [required]
+  --output-path PATH    Path to file or directory where data should be
+                        exported to                                 [required]
+  --output-format TEXT  Format which the data should be exported as. This
+                        option cannot be used with Visualizations
+  --help                Show this message and exit.
+
+                    There was a problem with the command:                     
+ (1/1) Invalid value for '--input-path': File
+  '/users/aflemis1/sink/PRJEB3232/qiime2_output/dada2/taxonomy.qza' does not
+  exist.
+Exported /users/aflemis1/sink/PRJEB3232/qiime2_output/dada2/table.qza as BIOMV210DirFmt to directory /users/aflemis1/sink/PRJEB3232/qiime2_output/dada2/table
+Exported /users/aflemis1/sink/PRJEB3232/qiime2_output/dada2/denoising_stats.qza as DADA2StatsDirFmt to directory /users/aflemis1/sink/PRJEB3232/qiime2_output/dada2/denoising_stats

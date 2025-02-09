@@ -1,0 +1,50 @@
+#!/bin/bash
+#SBATCH --partition=Orion
+#SBATCH --time=10:00:00  
+#SBATCH --nodes=4
+#SBATCH --ntasks-per-node=8
+#SBATCH --mem-per-cpu=8GB
+
+# module load qiime2/2024.2 this needs to be run in the terminal
+
+qiime tools import \
+  --type 'SampleData[SequencesWithQuality]' \
+  --input-path /users/aflemis1/sink/PRJEB3232/manifest.tsv \
+  --output-path /users/aflemis1/sink/PRJEB3232/qiime_output/single-end-demux.qza \
+  --input-format SingleEndFastqManifestPhred33V2
+  
+qiime dada2 denoise-single \
+ --p-trim-left 10 \
+ --p-trunc-len 150 \
+ --i-demultiplexed-seqs /users/aflemis1/sink/PRJEB3232/qiime_output/single-end-demux.qza \
+ --p-chimera-method pooled \
+ --p-min-fold-parent-over-abundance 100 \
+ --p-n-threads 30 \
+ --output-dir /users/aflemis1/sink/PRJEB3232/qiime2_output/dada2
+
+
+qiime feature-classifier classify-sklearn \
+      --i-classifier /users/aflemis1/Taxonomy_qiime2/silva-138-99-nb-classifier.qza \
+      --p-n-jobs 1 \
+      --i-reads /users/aflemis1/sink/PRJEB3232/qiime_output/dada2/representative_sequences.qza \
+      --o-classification /users/aflemis1/sink/PRJEB3232/qiime_output/dada2/taxonomy.qza
+
+qiime tools export \
+      --input-path  /users/aflemis1/sink/PRJEB3232/qiime_output/dada2/representative_sequences.qza \
+      --output-path  /users/aflemis1/sink/PRJEB3232/qiime_output/dada2/representative_sequences
+
+qiime tools export \
+      --input-path  /users/aflemis1/sink/PRJEB3232/qiime_output/dada2/taxonomy.qza \
+      --output-path  /users/aflemis1/sink/PRJEB3232/qiime2_output/dada2/taxonomy
+
+qiime tools export \
+      --input-path /users/aflemis1/sink/PRJEB3232/qiime2_output/dada2/table.qza \
+      --output-path  /users/aflemis1/sink/PRJEB3232/qiime2_output/dada2/table
+      
+qiime tools export \
+      --input-path /users/aflemis1/sink/PRJEB3232/qiime2_output/dada2/denoising_stats.qza  \
+      --output-path  /users/aflemis1/sink/PRJEB3232/qiime2_output/dada2/denoising_stats
+
+ 
+ 
+  
