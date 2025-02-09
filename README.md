@@ -1,21 +1,14 @@
 Directory Structure:
 
+```
 .
-
 |___ README.md
-
 |___project_info
-
 |   |___project_updates.pptx
-
 |
-
 |___scripts
-
 |   |___download_sra.sh
-
 |   |___sra.log 
-
 |
 |___PRJEB3232
 |   |___PRJEB3232_SraRunTable.txt
@@ -40,8 +33,7 @@ Directory Structure:
 |   |___SRR_Acc_List.txt
 |   |___fastq
 |       |___**all fastq files
-
-
+```
 All initial processing (fastq download and qiime taxonomic assignment) was done locally. Afterwards, files are processed on the cluster
 
 `download_sra.sh` 
