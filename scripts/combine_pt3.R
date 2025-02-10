@@ -1,6 +1,5 @@
 suppressPackageStartupMessages(library(dplyr))
 suppressPackageStartupMessages(library(tidyverse))
-getwd()
 source("./scripts/combine_pt3_utils.R")
 
 args <- commandArgs(trailingOnly = TRUE)
@@ -19,21 +18,21 @@ if(is.na(NA_vals)){
 combine_otus[is.na(combine_otus)] <- 0
 }
 
-ref.files <- list.files(".", "*_SraRunTable*", recursive = TRUE)
-
+ref.files <- list.files(".", "*_SraRunTable.txt", recursive = TRUE)
+print("metadata files:")
 print(ref.files)
+print("_________________________")
 
-
-# PRJEB14474 (10172): 
-details_PRJEB14474 <- info(1, ref.files)
-combine_otus <- columns_to_filter(combine_otus, c("sample_name", "Date"), details_PRJEB14474, "2016-08-15 09:00")
+# # PRJEB14474 (10172): 
+# details_PRJEB14474 <- info(1, ref.files)
+# combine_otus <- columns_to_filter(combine_otus, c("sample_name", "Date"), details_PRJEB14474, "2016-08-15 09:00")
 
 
 # file PRJEB26708 (11470):
 details_PRJEB26708 <- info(2,ref.files)
 combine_otus <- columns_to_filter(combine_otus, c("sample_name", "collection_timestamp"), details_PRJEB26708, "2016-08-15 09:00")
 
-# file PRJEB33050 (12470):
+# # file PRJEB33050 (12470):
 details_PRJEB33050 <- info(3, ref.files)
 combine_otus <- columns_to_filter(combine_otus, c("sample_name", "timepoint"), details_PRJEB33050, 2)
 
@@ -63,7 +62,6 @@ print("________________________________________________________")
 ### PRJEB14474 (10172): ###
 
 details_PRJEB14474 <- info(1, ref.files)
-
 # make count df
 print("count of each sample type in PRJEB14474: ")
 count(details_PRJEB14474, sample_type) %>% print()
@@ -140,6 +138,22 @@ combine_otus <- add_info_cols(combine_otus, details_df_and_unneeded_phenotypes$d
 print("________________________________________________________")
 
 
+#### Fixing an issue specific to this dataset
+
+print("Fixing an issue specific to this dataset")
+
+meta <- read.csv("./PRJEB14474/PRJEB14474_SraRunTable_old.txt", sep=",")
+combine_otus_no_na <- filter(combine_otus, is.na(Study_ID) | is.na(Phenotype))
+
+print("NA samples not from PRJEB14474")
+filter(combine_otus_no_na, !(sample_name %in% meta$Run)) %>% dim() %>% print()
+print("so all the NA samples are from PRJEB14474. This is because I filtered PRJEB14474's SRA table prior to analysis")
+
+PRJEB14474 <- filter(combine_otus, Study_ID == "PRJEB14474" & (sample_name %in% details_PRJEB14474$sample_name))
+combine_otus <- filter(combine_otus, Study_ID != "PRJEB14474")
+combine_otus <- rbind(PRJEB14474, combine_otus)
+
+print("________________________________________________________")
 
 #### move Study_ID and Phenotype ####
 

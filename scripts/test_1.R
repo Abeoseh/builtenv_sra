@@ -14,13 +14,14 @@ suppressPackageStartupMessages(library(pROC))
 # DEBIAS_data %>% distinct(Phenotype) %>% print()
 
 
-new <- read.csv("./PRJEB14474/PRJEB14474_SraRunTable.txt", sep=",")
-# old <- read.csv("./csv_files/skin_floor/lognorm_data.csv",sep=",")
+meta <- read.csv("./PRJEB14474/PRJEB14474_SraRunTable_old.txt", sep=",")
+lognorm <- read.csv("./csv_files/test/lognorm_data.csv",sep=",")
 
-new$Date <- as.Date(new$Date, format = "%M/%D/%Y")
 
-new <- filter(new, Date > 2/23/2013)
-write.csv(new, "csv_files/test/test.csv", row.names=F)
+lognorm_no_na <- filter(lognorm, is.na(Study_ID) | is.na(Phenotype))
+
+print("NA samples not from PRJEB14474")
+filter(lognorm_no_na, !(sample_name %in% meta$Run)) %>% dim() %>% print()
 
 
 # figure out which samples are missing

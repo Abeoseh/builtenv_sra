@@ -42,7 +42,7 @@ colnames(roc.df) <- c("Study_ID", "DEBIAS", "Permutation", "sensitivities", "spe
 
 
 
-png(paste("./output/",output,"/ROC_histograms/pre_DEBIAS-M_RF_lognorm_ROC_", IDs[i], ".png", sep=""))#, height = 24, width = 24)
+png(paste("./output/",output,"/plots/pre_DEBIAS-M_RF_lognorm_ROC_", IDs[i], ".png", sep=""))#, height = 24, width = 24)
 # par(mar=c(3,3,1,0))#, mfrow=c(2,2))
 
 
@@ -106,7 +106,7 @@ dev.off()
 
 auc.df$AUC <- as.numeric(auc.df$AUC)
 
-png(paste("./output/",output,"/ROC_histograms/pre_DEBIAS-M_RF_lognorm_histogram_", IDs[i], ".png", sep=""))
+png(paste("./output/",output,"/plots/pre_DEBIAS-M_RF_lognorm_histogram_", IDs[i], ".png", sep=""))
 
 a <- auc.df[auc.df$Permutation == FALSE,]$AUC
 samp <- auc.df[auc.df$Permutation == TRUE,]$AUC
@@ -129,46 +129,99 @@ dev.off()
 
 #### Variable Importance plots ####
 
-png(paste("./output/",output,"/ROC_histograms/pre_var_importance_", IDs[i], ".png", sep=""), width = 900, height=500)
-randomForest::varImpPlot(RF_fit, 
-                         sort=TRUE, 
-                         main=paste("Variable Importance Plot ", "Training without: ", phen, sep=""))
-dev.off()
+# png(paste("./output/",output,"/plots/pre_var_importance_", IDs[i], ".png", sep=""), width = 900, height=500)
+# randomForest::varImpPlot(RF_fit, 
+#                          sort=TRUE, 
+#                          main=paste("Variable Importance Plot ", "Training without: ", phen, sep=""))
+# dev.off()
 
 ## as bar chart:
 
 # make dataframe from importance() output
 actual_cols = actual_cols[-c(1:3)] # Remove Sample, Study_ID, Phenotype
 
+print("feature importance before df")
+print(importance(RF_fit))
+
 
 feat_imp_df <- importance(RF_fit) %>% 
   data.frame() %>% 
   mutate(feature = row.names(.)) 
 
+
+print("feature importance after df, before mods")
+print(feat_imp_df)
+
 feat_imp_df$feature = actual_cols
+feat_imp_df$abs_MeanDecreaseGini <- abs(feat_imp_df$MeanDecreaseGini) 
+
+feat_imp_df = arrange(feat_imp_df, desc(abs_MeanDecreaseGini))
 
 
+print("feature importance after df, after mods")
+print(feat_imp_df)
 
 
-feat_imp_df = arrange(feat_imp_df, desc(MeanDecreaseGini))
-feat_imp_df = feat_imp_df[1:50,]
+feat_imp_top_50 = feat_imp_df[1:50,]
+print(feat_imp_top_50)
+
 
 # plot dataframe
-g <-  ggplot(feat_imp_df, aes(x = reorder(feature, MeanDecreaseGini), 
-                              y = MeanDecreaseGini)) +
+g <-  ggplot(feat_imp_top_50, aes(x = reorder(feature, abs_MeanDecreaseGini), 
+                              y = abs_MeanDecreaseGini)) +
   geom_bar(stat='identity') +
   coord_flip() +
   theme_classic() +
   labs(
     x     = "Feature",
     y     = "Importance",
-    title = str_wrap(paste("Variable Importance Plot ", "Training without: ", phen, sep=""),60) 
-  )
+    title = str_wrap(paste("Variable Importance Plot ", "Training without: ", phen, sep=""),40)) +
+  theme(plot.title = element_text(size=15), axis.text=element_text(size=11),
+        axis.title=element_text(size=15)) 
 
-png(paste("./output/",output,"/ROC_histograms/pre_var_importance_bars_", IDs[i], ".png", sep=""), width = 680, height=500)
+png(paste("./output/",output,"/plots/pre_var_importance_bars_", IDs[i], ".png", sep=""), width = 680, height=600)
 print(g)
 dev.off()
 
+
+if(file.exists( paste("output/", output, "/pval_v_pval/files/wilcox_pval.csv", sep="") )){
+  suppressPackageStartupMessages(library(ggrepel))
+  
+  wilcox <- read.csv(paste("output/", output, "/pval_v_pval/files/wilcox_pval.csv", sep=""))
+  wilcox_ID <- paste("pval_", IDs[i], sep="")
+  wilcox <- wilcox[, c("bacteria", wilcox_ID)]
+  wilcox <- na.omit(wilcox)
+  
+  wilcox_imp <- merge(wilcox, feat_imp_df, by.x = "bacteria", by.y = "feature", all.x = TRUE)
+  
+  xlims <- range(wilcox_imp[[wilcox_ID]])
+  xlims[1] <- xlims[1] - 10
+  xlims[2] <- xlims[2] + 10
+  ylims <- range(wilcox_imp[["MeanDecreaseGini"]])
+  ylims[1] <- xlims[1] - 10
+  ylims[2] <- xlims[2] + 10
+  
+  plot <- ggplot(wilcox_imp, aes(x = .data[[wilcox_ID]], y = .data[["MeanDecreaseGini"]], label = bacteria)) +
+    geom_point() +
+    # geom_text(mapping = aes(label = bacteria)) + # remove label from ggplot() aes before you uncomment this line of code (2 lines up)
+    # geom_hline(yintercept=log10(0.05), linetype='dotted', col = 'red') +
+    # geom_hline(yintercept=-log10(0.05), linetype='dotted', col = 'red') +
+    geom_vline(xintercept=log10(0.05), linetype='dotted', col = 'red') +
+    geom_vline(xintercept=-log10(0.05), linetype='dotted', col = 'red') +
+    # adjust x and y limits
+    xlim(xlims) +
+    ylim(ylims) +
+    geom_text_repel(max.overlaps = 10, force_pull = 1, nudge_y = 1,size = 3) +
+    labs(title = paste("log10 p-value vs Feature Importance plot",phen), x = "log10 p-value", y = "Importance") +
+    theme(plot.title = element_text(size=22), axis.text=element_text(size=11),
+          axis.title=element_text(size=15)) 
+  
+  png(paste("./output/",output,"/plots/pre_pval_imp_", IDs[i], ".png", sep=""), width = 1050, height = 480)
+  print(plot)
+  dev.off()
+  
+  
+}
 
 
 
@@ -176,13 +229,14 @@ print(paste(i, "of", length(IDs), " graphs done.", IDs[i]))
 
 
 #### Write to CSV files ####
-AUC_filename <- paste("./output/",output,"/AUCs/builtenv_AUCs.csv",sep="")
-pval_filename <- paste("./output/",output,"/AUCs/builtenv_AUC_pvals.csv",sep="")
-ROC_filename <- paste("./output/",output,"/AUCs/builtenv_ROCs.csv",sep="")
+AUC_filename <- paste("./output/",output,"/CSVs/builtenv_AUCs.csv",sep="")
+pval_filename <- paste("./output/",output,"/CSVs/builtenv_AUC_pvals.csv",sep="")
+ROC_filename <- paste("./output/",output,"/CSVs/builtenv_ROCs.csv",sep="")
 
 
-write.csv(auc.df, paste("./output/",output,"/AUCs/builtenv_pre_DEBIAS_",IDs[i],"_AUCs.csv",sep=""), row.names = FALSE)
-write.csv(roc.df, paste("./output/",output,"/AUCs/builtenv_pre_DEBIAS_",IDs[i],"_ROCs.csv",sep=""), row.names = FALSE)
+write.csv(auc.df, paste("./output/",output,"/CSVs/builtenv_pre_DEBIAS_",IDs[i],"_AUCs.csv",sep=""), row.names = FALSE)
+write.csv(roc.df, paste("./output/",output,"/CSVs/builtenv_pre_DEBIAS_",IDs[i],"_ROCs.csv",sep=""), row.names = FALSE)
+write.csv(feat_imp_df, paste("./output/",output,"/CSVs/builtenv_pre_DEBIAS_",IDs[i],"_featimp.csv",sep=""), row.names = FALSE)
 
 ## AUC
 if(file.exists(AUC_filename)){

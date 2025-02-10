@@ -39,7 +39,7 @@ roc.df <- data.frame(matrix(ncol = 5, nrow = 0))
 colnames(roc.df) <- c("Study_ID", "DEBIAS", "Permutation", "sensitivities", "specificities")
 
 
-png(paste("./output/",folder,"/ROC_histograms/post_DEBIAS-M_RF_lognorm_ROC_", ID_label, ".png", sep=""))#, height = 24, width = 24)
+png(paste("./output/",folder,"/plots/post_DEBIAS-M_RF_lognorm_ROC_", ID_label, ".png", sep=""))#, height = 24, width = 24)
 
 
 training <- filter(DEBIAS_data, Study_ID != ID_label)
@@ -101,7 +101,7 @@ dev.off()
 # convert AUC in auc.df to numeric
 auc.df$AUC <- as.numeric(auc.df$AUC)
 
-png(paste("./output/",folder,"/ROC_histograms/post_DEBIAS-M_RF_lognorm_histogram_", ID_label, ".png", sep=""))
+png(paste("./output/",folder,"/plots/post_DEBIAS-M_RF_lognorm_histogram_", ID_label, ".png", sep=""))
 
 a <- auc.df[auc.df$Permutation == FALSE,]$AUC
 samp <- auc.df[auc.df$Permutation == TRUE,]$AUC
@@ -123,7 +123,7 @@ dev.off()
 #### Variable Importance plots ####
 
 
-png(paste("./output/",folder,"/ROC_histograms/post_var_importance_", ID_label, ".png", sep=""), width = 900, height=500)
+png(paste("./output/",folder,"/plots/post_var_importance_", ID_label, ".png", sep=""), width = 900, height=500)
 par("mar"=c(5,2,5,2))
 randomForest::varImpPlot(RF_fit, 
                          sort=TRUE, 
@@ -158,7 +158,7 @@ g <-  ggplot(feat_imp_df, aes(x = reorder(feature, MeanDecreaseGini),
     title = str_wrap(paste("Variable Importance Plot ", "Training without: ", phen, sep=""),60)
   )
 
-png(paste("./output/",folder,"/ROC_histograms/post_var_importance_bars_", ID_label, ".png", sep=""), width = 680, height=500)
+png(paste("./output/",folder,"/plots/post_var_importance_bars_", ID_label, ".png", sep=""), width = 680, height=500)
 print(g)
 dev.off()
 
@@ -168,13 +168,13 @@ print(paste(ID_label, " graph done."))
 
 #### Write to CSV files ####
 
-# AUCs
-AUC_filename <- paste("./output/",folder,"/AUCs/builtenv_AUCs.csv",sep="")
-pval_filename <- paste("./output/",folder,"/AUCs/builtenv_AUC_pvals.csv",sep="")
-ROC_filename <- paste("./output/",folder,"/AUCs/builtenv_ROCs.csv",sep="")
+# CSVs
+AUC_filename <- paste("./output/",folder,"/CSVs/builtenv_AUCs.csv",sep="")
+pval_filename <- paste("./output/",folder,"/CSVs/builtenv_AUC_pvals.csv",sep="")
+ROC_filename <- paste("./output/",folder,"/CSVs/builtenv_ROCs.csv",sep="")
 
-write.csv(auc.df, paste("./output/",folder,"/AUCs/builtenv_post_DEBIAS_",ID_label,"_AUCs.csv",sep=""), row.names = FALSE)
-write.csv(roc.df, paste("./output/",folder,"/AUCs/builtenv_post_DEBIAS_",ID_label,"_ROCs.csv",sep=""), row.names = FALSE)
+write.csv(auc.df, paste("./output/",folder,"/CSVs/builtenv_post_DEBIAS_",ID_label,"_AUCs.csv",sep=""), row.names = FALSE)
+write.csv(roc.df, paste("./output/",folder,"/CSVs/builtenv_post_DEBIAS_",ID_label,"_ROCs.csv",sep=""), row.names = FALSE)
 
 ## AUC
 if(file.exists(AUC_filename)){

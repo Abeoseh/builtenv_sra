@@ -85,7 +85,7 @@ print(IDs)
 
 wilcox_pval =  filter(lognorm, Study_ID == !!IDs[1]) %>% compute_pvals(IDs[1])
 
-print(IDs[1])
+print(paste("done", IDs[1]))
 
 for( ID in IDs[2:length(IDs)]){
 	wilcox_pval = filter(lognorm, Study_ID == !!ID) %>% compute_pvals(ID) %>% merge(wilcox_pval, by="bacteria", all=TRUE)
@@ -101,7 +101,9 @@ wilcox_pval[,2:(length(wilcox_pval))] <- sapply(wilcox_pval[,2:(length(wilcox_pv
 print("str of wilcox_pval after numeric conversion (NAs are expected)")
 print(str(wilcox_pval))
 
-# write.csv(wilcox_pval, "./csv_files/test/wilcox2.csv", row.names = FALSE)
+# write.csv(wilcox_pval, "./csv_files/test/wilcox_pval.csv", row.names = FALSE)
+write.csv(wilcox_pval, paste("./output/", output, "/pval_v_pval/files/wilcox_pval.csv", sep=""),row.names=F )
+
 
 ### Graph: ###
 used_IDs = list()
