@@ -33,5 +33,3 @@ Processing Notes:
 - PRJNA834026 had no taxonomy assigned and was dropped.
 
 
- ### provide accessions:
-    ### automatically makes folders then downloads data (run table... then renames to project_run_table and accession list)
