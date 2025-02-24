@@ -33,33 +33,33 @@ sbatch scripts/qiime2_paired.slurm PRJNA834026
 ```
 
 
-**./scripts/combine_pt3.R**
+**combine_pt3.R**
 ```
 $1 output folder name
 $2 first phenotype
 $3 second phenotype
 $4 (""/T) keep NA as NA
-./scripts/combine_pt3.R $1 $2 $3 $4
+combine_pt3.R $1 $2 $3 $4
 
 ex:
 sbatch combine_pt3.sbatch "associated" "skin associated" "floor associated" # results in NA values being coded as 0
 sbatch combine_pt3.sbatch "associated_na" "skin associated" "floor associated" "T" # results in NA staying as NA
 ```
-**./scripts/PERMANOVA_PCOA.R**
+**PERMANOVA_PCOA.R**
 ```
 Makes PERMANOVA and POCA plots
 $1 full input filepath including file name
 $2 full output filepath including filename without .png, but no error will occur if .png is given.
 $3 is pheno1
 $4 is pheno2
-./scripts/PERMANOVA_PCOA.R $1 $2 $3 $4
+PERMANOVA_PCOA.R $1 $2 $3 $4
 
 ex: 
 sbatch PERMANOVA_PCOA.sbatch ./csv_files/vetted_ontology/lognorm_data.csv ./output/PCOA/vetted
 sbatch PERMANOVA_PCOA.sbatch ./csv_files/vetted_ontology/lognorm_data.csv ./output/PCOA/vetted.png # the .png will be stripped of
 ```
 
-**./scripts/pval-pval_plot.R**
+**pval-pval_plot.R**
 ```
 Makes pval-pval plots
 sbatch pval-pval_plot.sbatch $1 $2
