@@ -221,6 +221,8 @@ dfs_names = c("all", "hand", "environmental")
 
 t_test_plot <- function(pco_df, pco){
   
+  if(pco == "PCoA1"){pc = "PCo1"} else{pc = "PCo2"}
+  
   # calculate p-values
   pval_df <- stats::pairwise.t.test(pco_df[[pco]], pco_df$Author)$p.value %>% 
     data.frame(check.names = FALSE) %>%
