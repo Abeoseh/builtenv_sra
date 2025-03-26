@@ -221,16 +221,22 @@ dfs_names = c("all", "hand", "environmental")
 
 t_test_plot <- function(pco_df, pco){
   
+  # for naming the PCoA graphs
   if(pco == "PCoA1"){pc = "PCo1"} else{pc = "PCo2"}
   
-  # calculate p-values
+  # calculate p-values, make the p-values into a df, and only keep significant p-values
   pval_df <- stats::pairwise.t.test(pco_df[[pco]], pco_df$Author)$p.value %>% 
     data.frame(check.names = FALSE) %>%
     rownames_to_column("groups") %>%
     pivot_longer(cols = -groups, names_to = "variable", values_to = "p_value") %>% na.omit() %>%
     filter(p_value < 0.05)
+  
   pval_df$p_value <- signif(pval_df$p_value, 3)
+  
+  # ensure the format is what geom_signif wants i.e., p-value|c(group1, group2)
   pval_df = mutate(pval_df, groups = purrr::pmap(.l = list(groups, variable), .f = c))
+  
+  # add the stars of significance to the df so that can be plotted instead
   pval_df$stars <- case_when(pval_df$p_value < 0.05 & pval_df$p_value > 0.01 ~ "*",
                              pval_df$p_value <= 0.01 & pval_df$p_value > 0.001 ~ "**",
                              pval_df$p_value <= 0.001 & pval_df$p_value > 0.0001 ~ "***",
@@ -238,7 +244,7 @@ t_test_plot <- function(pco_df, pco){
   
 
   pco.plot = ggplot(pco_df, aes(Author, .data[[pco]])) +
-    labs(title = paste(pco, "for",dfs_names[i], "samples")) +
+    labs(title = paste(pc, "for",dfs_names[i], "samples"), y = pc) +
     geom_boxplot(aes(color = Author)) +
     geom_point(aes(color = Author)) +
     scale_color_manual(values = group.colors, name = "Study") +
