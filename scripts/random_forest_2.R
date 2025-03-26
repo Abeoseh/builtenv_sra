@@ -162,9 +162,37 @@ png(paste("./output/",folder,"/plots/post_var_importance_bars_", ID_label, ".png
 print(g)
 dev.off()
 
+## pval vs inportance plots if pval exists
+if(file.exists( paste("output/", output, "/pval_v_pval/files/wilcox_pval.csv", sep="") )){
+  suppressPackageStartupMessages(library(ggrepel))
+  
+  wilcox <- read.csv(paste("output/", output, "/pval_v_pval/files/wilcox_pval.csv", sep=""))
+  wilcox_ID <- paste("pval_", ID_label, sep="")
+  wilcox <- wilcox[, c("bacteria", wilcox_ID)]
+  wilcox <- na.omit(wilcox)
+  
+  wilcox_imp <- merge(wilcox, feat_imp_df, by.x = "bacteria", by.y = "feature", all.x = TRUE)
+  
+  
+  
+  plot <- ggplot(wilcox_imp, aes(x = abs(.data[[wilcox_ID]]), y = .data[["MeanDecreaseGini"]], label = bacteria)) +
+    geom_point() +
+    
+    geom_vline(xintercept=log10(0.05), linetype='dotted', col = 'red') +
 
+    geom_text_repel(max.overlaps = 10, force_pull = 1, nudge_y = 1,size = 3) +
+    labs(title = paste("log10 p-value vs Feature Importance plot",phen), x = "log10 p-value", y = "Importance") +
+    theme(plot.title = element_text(size=22), axis.text=element_text(size=11),
+          axis.title=element_text(size=15)) 
+  
+  png(paste("./output/",output,"/plots/pre_pval_imp_", ID_label, ".png", sep=""), width = 1050, height = 480)
+  print(plot)
+  dev.off()
+  
+  
+}
 
-print(paste(ID_label, " graph done."))
+print(paste(ID_label, " graphs done."))
 
 #### Write to CSV files ####
 

@@ -30,6 +30,7 @@ print("_________________________")
 
 # file PRJEB26708 (11470):
 details_PRJEB26708 <- info(2,ref.files)
+# combine_otus <- columns_to_filter(combine_otus, c("sample_name", "collection_timestamp"), details_PRJEB26708, "2016-09-11 09:00")
 combine_otus <- columns_to_filter(combine_otus, c("sample_name", "collection_timestamp"), details_PRJEB26708, "2016-08-15 09:00")
 
 # # file PRJEB33050 (12470):
@@ -213,7 +214,7 @@ sample_count(final_df, details_PRJEB33050, "surfaceaggregated")
 
 ## details_PRJEB6292 is filter to the correct timepoint by details_df_and_unneeded_phenotypes
 print("               ")
-print("PRJEB33050")
+print("PRJEB6292")
 sample_count(final_df, details_PRJEB6292, "surface")
 
 

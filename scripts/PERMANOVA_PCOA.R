@@ -23,7 +23,6 @@ output = strsplit(output, ".png")[[1]]
 
 PCOA_df <- read.csv(input)
 Studies = read.csv("./csv_files/phenotypes.csv")
-# IDs = unique(PCOA_df$Study_ID)
 
 
 #### PERMANOVA ####
@@ -70,22 +69,38 @@ for(ID in IDs){
 
 write.csv(perm_df, paste(output,"_individual_permanova.csv",sep=""))
 
-## PERMANOVA with studies as a random term and phenotype as a fixed term
+#### PERMANOVA with studies as a random term and phenotype as a fixed term
 
 
 data_cols <- PCOA_df[,-c(1:6)]
- 
+print("TRUE %in% is.na(data_cols) ")
+print(TRUE %in% is.na(data_cols))
 meta <- PCOA_df[,c(1,2,4)]
 
-perm = adonis2(data_cols ~ Phenotype, method = "bray", meta, permutations = 1000, strata = meta$Study_ID)
-print(perm)
-print(summary(perm))
+# perm = adonis2(data_cols ~ Phenotype, method = "bray", meta, permutations = 1000, strata = meta$Study_ID)
+# print(perm)
+# print(summary(perm))
 
 perm_df <- adonis2(data_cols ~ Phenotype, method = "bray", meta, permutations = 1000, strata = meta$Study_ID) %>% as.data.frame()
 
 
 write.csv(perm_df, paste(output,"_stratified_permanova.csv",sep=""))
 
+
+#### PERMANOVA of Study_ID
+
+
+data_cols <- PCOA_df[,-c(1:7)]
+meta <- PCOA_df[,c(1,2,4)]
+
+# perm = adonis2(data_cols ~ Study_ID, method = "bray", meta, permutations = 1000)
+# print(perm)
+# print(summary(perm))
+
+perm_df <- adonis2(data_cols ~ Study_ID, method = "bray", meta, permutations = 1000) %>% as.data.frame()
+
+
+write.csv(perm_df, paste(output,"_StudyID_permanova.csv",sep=""))
 
 
 print("PERMANOVA finished, starting POCAs")
@@ -96,9 +111,8 @@ IDs = unique(PCOA_df$Study_ID)
 group.colors <- c(setNames("#880808",pheno1), setNames("#333BFF", pheno2))
 
 #### PCOA individual ####
+
 pcoa <- function(df, chosen_title, pc = NULL){
-  
-  
   
   bray <- vegdist(df, method = "bray")
   pcoa_val <- pco(bray, negvals = "zero", dround = 0)
@@ -120,20 +134,25 @@ pcoa <- function(df, chosen_title, pc = NULL){
                            PCoA2 = pcoa_val$vectors[,2])
   
   pcoa_val.df = merge(pcoa_val.df, phenos, by.all = "sample_name")
+  pcoa_val.df$Phenotype <- as.factor(pcoa_val.df$Phenotype)
+
   
   # compute variance explained by each PCoA via eigenvalues 
   eigenvalues = pcoa_val$values
   
   pco.plot <- ggplot(data = pcoa_val.df, mapping = aes(x = PCoA1, y = PCoA2)) + 
-    geom_point(aes(col = as.factor(Phenotype)), alpha = 0.7) +
+    geom_point(aes(col = Phenotype), alpha = 0.7) +
     scale_color_manual(values = group.colors) +
-	theme(plot.margin = margin(10, 10, 20, 10)) +
-    labs(title = str_wrap(chosen_title,30), x = paste("PC1 (", round((eigenvalues[1] / sum(eigenvalues)) * 100, 2), "%)",sep=""), 
-        y = paste("PC2 (", round((eigenvalues[2] / sum(eigenvalues)) * 100, 2),"%)",sep=""), color="Phenotype")
+    stat_ellipse(level = 0.95, aes(group = Phenotype, color = Phenotype)) +
+	  theme(plot.margin = margin(10, 10, 20, 10), plot.caption = element_text(hjust = 0)) +
+    labs(title = str_wrap(chosen_title,30), x = paste("PCo1 (", round((eigenvalues[1] / sum(eigenvalues)) * 100, 2), "%)",sep=""), 
+        y = paste("PCo2 (", round((eigenvalues[2] / sum(eigenvalues)) * 100, 2),"%)",sep=""), color="Phenotype",
+        caption = paste("PERMANOVA p-value =", signif(perm_study[["Pr(>F)"]],2), "R2 =", round(perm_study$R2, 2)) )
   return(pco.plot)
 }
 
 #### Individual PCOAs ####
+perm_df <- read.csv(paste(output,"_individual_permanova.csv",sep=""), row.names=1, check.names=F)
 for(i in 1:length(IDs)){
   post_DEBIAS <- filter(PCOA_df, Study_ID == IDs[i])
 
@@ -143,31 +162,34 @@ for(i in 1:length(IDs)){
   phenos$Phenotype[phenos$Phenotype=="0"] <- pheno2
   
   row.names(post_DEBIAS) <- post_DEBIAS$sample_name
-  post_DEBIAS <- post_DEBIAS[,6:length(post_DEBIAS)]
+  post_DEBIAS <- post_DEBIAS[,7:length(post_DEBIAS)]
   row.names(post_DEBIAS) <- phenos$sample_name
   
   
   Study = Studies$Author[Studies$ID == IDs[i]]
+  perm_study <- filter(perm_df, Author == !!Study & "Phenotype" %in% row.names(perm_df))
+  perm_study <- perm_study[1,]
+  print(perm_study)
   print(Study)
 
   # ex i==1, 1+1%%2 == 0 and 1+1%%4 is not 0
   if((i+1)%%2 == 0 & (i+1)%%4 != 0){
-    p1 = pcoa(post_DEBIAS[4:length(post_DEBIAS)], paste("PCoA on ", Study, sep = ""))
+    p1 = pcoa(post_DEBIAS[2:length(post_DEBIAS)], paste("PCoA on ", Study, sep = ""))
     print(paste(i, "p1"))
     amount = 1}
   
   if(i%%2 == 0 & i%%4 != 0){
-    p2 = pcoa(post_DEBIAS[4:length(post_DEBIAS)], paste("PCoA on ", Study, sep = ""))
+    p2 = pcoa(post_DEBIAS[2:length(post_DEBIAS)], paste("PCoA on ", Study, sep = ""))
     print(paste(i, "p2"))
     amount = amount + 1}
   
   if((i+1)%%4 == 0){
-    p3 = pcoa(post_DEBIAS[4:length(post_DEBIAS)], paste("PCoA on ", Study, sep = ""))
+    p3 = pcoa(post_DEBIAS[2:length(post_DEBIAS)], paste("PCoA on ", Study, sep = ""))
     print(paste(i, "p3"))
     amount = amount + 1}
   
   if(i%%4 == 0){
-    p4 = pcoa(post_DEBIAS[4:length(post_DEBIAS)], paste("PCoA on ", Study, sep = ""))
+    p4 = pcoa(post_DEBIAS[2:length(post_DEBIAS)], paste("PCoA on ", Study, sep = ""))
     print(paste(i, "p4"))
     amount = 0
     
@@ -197,6 +219,8 @@ for(i in 1:length(IDs)){
 
 
 #### PCOA of all data colored by phenotype ####
+perm_df <- read.csv(paste(output,"_stratified_permanova.csv",sep=""), row.names=1, check.names=F)
+perm_df <- perm_df[1,]
 
 phenos <- select(PCOA_df, sample_name, Phenotype, Study_ID)
 phenos$Phenotype[phenos$Phenotype=="1"] <- pheno1
@@ -207,7 +231,7 @@ phenos$Phenotype[phenos$Phenotype=="0"] <- pheno2
 # phenos$Phenotype <- paste(phenos$Study_ID, phenos$Phenotype)
 
 row.names(PCOA_df) <- PCOA_df$sample_name
-numeric_df <- PCOA_df[,6:length(PCOA_df)]
+numeric_df <- PCOA_df[,7:length(PCOA_df)]
 row.names(numeric_df) <- phenos$sample_name
 
 
@@ -230,15 +254,21 @@ pcoa_val.df = merge(pcoa_val.df, phenos, by.all = "sample_name")
 pco.plot = ggplot(data = pcoa_val.df, mapping = aes(x = PCoA1, y = PCoA2)) +
   geom_point(aes(col = as.factor(Phenotype)), alpha = 0.7) +
   # scale_color_brewer(name = "phenotype", palette = "Accent") +
+  stat_ellipse(level = 0.95, aes(group = Phenotype, color = Phenotype)) +
   scale_color_manual(values = group.colors) +
-  labs(title = "PCoA of Count data", x = paste("PC1 (", round((eigenvalues[1] / sum(eigenvalues)) * 100, 2), "%)",sep=""), 
-       y = paste("PC2 (", round((eigenvalues[2] / sum(eigenvalues)) * 100, 2),"%)",sep=""), color="Phenotype")
+  theme(plot.margin = margin(10, 10, 20, 10), plot.caption = element_text(hjust = 0)) +
+  labs(title = "PCoA of Count data", x = paste("PCo1 (", round((eigenvalues[1] / sum(eigenvalues)) * 100, 2), "%)",sep=""), 
+       y = paste("PCo2 (", round((eigenvalues[2] / sum(eigenvalues)) * 100, 2),"%)",sep=""),
+       caption = paste("PERMANOVA p-value =", signif(perm_df[["Pr(>F)"]],2), "R2 =", round(perm_df$R2, 2)),
+       color="Phenotype" )
 
 png(paste(output,"_combine.png",sep=""))
 print(pco.plot)
 dev.off()
 
 #### PCOA of all data colored by Study ID ####
+perm_df <- read.csv(paste(output,"_StudyID_permanova.csv",sep=""), row.names=1, check.names=F)
+perm_df <- perm_df[1,]
 
 group.colors <- c(`Hospital: Lax et al. 2017` = "#880808", `Air Force: Sharma et al. 2019` = "#333BFF", 
                   `Dorm: Richardson et al. 2019` = "#32a848", `House: Lax et al. 2014` = "#a832a8" ) # #8a8328 burnt yellow color
@@ -247,7 +277,7 @@ group.colors <- c(`Hospital: Lax et al. 2017` = "#880808", `Air Force: Sharma et
 rownames(PCOA_df) <- make.names(PCOA_df$Study_ID, unique = TRUE)
 rownames(PCOA_df) <- gsub("^X", "", rownames(PCOA_df))
 
-numeric_df <- PCOA_df[,6:length(PCOA_df)]
+numeric_df <- PCOA_df[,7:length(PCOA_df)]
 row.names(numeric_df) <- rownames(PCOA_df)
 
 bray <- vegdist(numeric_df, method = "bray")
@@ -274,9 +304,12 @@ print(dim(pcoa_val.df))
 pco.plot = ggplot(data = pcoa_val.df, mapping = aes(x = PCoA1, y = PCoA2)) +
   geom_point(aes(col = as.factor(Author)), alpha = 0.7) +
   # scale_color_brewer(name = "phenotype", palette = "Accent") +
+  stat_ellipse(level = 0.95, aes(group = Author, color = Author)) +
   scale_color_manual(values = group.colors) +
-  labs(title = "PCoA of Count data", x = paste("PC1 (", round((eigenvalues[1] / sum(eigenvalues)) * 100, 2), "%)",sep=""), 
-       y = paste("PC2 (", round((eigenvalues[2] / sum(eigenvalues)) * 100, 2),"%)",sep=""), color="Author")
+  theme(plot.margin = margin(10, 10, 20, 10), plot.caption = element_text(hjust = 0)) +
+  labs(title = "PCoA of Count data", x = paste("PCo1 (", round((eigenvalues[1] / sum(eigenvalues)) * 100, 2), "%)",sep=""), 
+       y = paste("PCo2 (", round((eigenvalues[2] / sum(eigenvalues)) * 100, 2),"%)",sep=""), color="Study",
+       caption = paste("PERMANOVA p-value =", signif(perm_df[["Pr(>F)"]],2), "R2 =", round(perm_df$R2, 2)) )
 
 png(paste(output,"_combine_Study_ID.png",sep=""))
 print(pco.plot)

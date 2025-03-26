@@ -106,6 +106,7 @@ dev.off()
 
 auc.df$AUC <- as.numeric(auc.df$AUC)
 
+#### Histograms ####
 png(paste("./output/",output,"/plots/pre_DEBIAS-M_RF_lognorm_histogram_", IDs[i], ".png", sep=""))
 
 a <- auc.df[auc.df$Permutation == FALSE,]$AUC
@@ -140,17 +141,10 @@ dev.off()
 # make dataframe from importance() output
 actual_cols = actual_cols[-c(1:3)] # Remove Sample, Study_ID, Phenotype
 
-print("feature importance before df")
-print(importance(RF_fit))
-
-
 feat_imp_df <- importance(RF_fit) %>% 
   data.frame() %>% 
   mutate(feature = row.names(.)) 
 
-
-print("feature importance after df, before mods")
-print(feat_imp_df)
 
 feat_imp_df$feature = actual_cols
 feat_imp_df$abs_MeanDecreaseGini <- abs(feat_imp_df$MeanDecreaseGini) 
@@ -158,12 +152,7 @@ feat_imp_df$abs_MeanDecreaseGini <- abs(feat_imp_df$MeanDecreaseGini)
 feat_imp_df = arrange(feat_imp_df, desc(abs_MeanDecreaseGini))
 
 
-print("feature importance after df, after mods")
-print(feat_imp_df)
-
-
 feat_imp_top_50 = feat_imp_df[1:50,]
-print(feat_imp_top_50)
 
 
 # plot dataframe
@@ -173,8 +162,8 @@ g <-  ggplot(feat_imp_top_50, aes(x = reorder(feature, abs_MeanDecreaseGini),
   coord_flip() +
   theme_classic() +
   labs(
-    x     = "Feature",
-    y     = "Importance",
+    x = "Feature",
+    y = "Importance",
     title = str_wrap(paste("Variable Importance Plot ", "Training without: ", phen, sep=""),40)) +
   theme(plot.title = element_text(size=15), axis.text=element_text(size=11),
         axis.title=element_text(size=15)) 
@@ -183,9 +172,9 @@ png(paste("./output/",output,"/plots/pre_var_importance_bars_", IDs[i], ".png", 
 print(g)
 dev.off()
 
-
+## pval vs inportance plots if pval exists
 if(file.exists( paste("output/", output, "/pval_v_pval/files/wilcox_pval.csv", sep="") )){
-  suppressPackageStartupMessages(library(ggrepel))
+  # suppressPackageStartupMessages(library(ggrepel))
   
   wilcox <- read.csv(paste("output/", output, "/pval_v_pval/files/wilcox_pval.csv", sep=""))
   wilcox_ID <- paste("pval_", IDs[i], sep="")
@@ -193,26 +182,21 @@ if(file.exists( paste("output/", output, "/pval_v_pval/files/wilcox_pval.csv", s
   wilcox <- na.omit(wilcox)
   
   wilcox_imp <- merge(wilcox, feat_imp_df, by.x = "bacteria", by.y = "feature", all.x = TRUE)
+  wilcox_imp$MeanDecreaseGini <- log10(wilcox_imp$MeanDecreaseGini + 1)
   
-  xlims <- range(wilcox_imp[[wilcox_ID]])
-  xlims[1] <- xlims[1] - 10
-  xlims[2] <- xlims[2] + 10
-  ylims <- range(wilcox_imp[["MeanDecreaseGini"]])
-  ylims[1] <- xlims[1] - 10
-  ylims[2] <- xlims[2] + 10
+  cor <- cor.test(wilcox_imp$MeanDecreaseGini, wilcox_imp[[wilcox_ID]])
+  print(cor)
+
   
-  plot <- ggplot(wilcox_imp, aes(x = .data[[wilcox_ID]], y = .data[["MeanDecreaseGini"]], label = bacteria)) +
+  plot <- ggplot(wilcox_imp, aes(x = abs(.data[[wilcox_ID]]), y = .data[["MeanDecreaseGini"]], label = bacteria)) +
     geom_point() +
-    # geom_text(mapping = aes(label = bacteria)) + # remove label from ggplot() aes before you uncomment this line of code (2 lines up)
-    # geom_hline(yintercept=log10(0.05), linetype='dotted', col = 'red') +
-    # geom_hline(yintercept=-log10(0.05), linetype='dotted', col = 'red') +
-    geom_vline(xintercept=log10(0.05), linetype='dotted', col = 'red') +
+    # geom_vline(xintercept=log10(0.05), linetype='dotted', col = 'red') +
     geom_vline(xintercept=-log10(0.05), linetype='dotted', col = 'red') +
-    # adjust x and y limits
-    xlim(xlims) +
-    ylim(ylims) +
-    geom_text_repel(max.overlaps = 10, force_pull = 1, nudge_y = 1,size = 3) +
-    labs(title = paste("log10 p-value vs Feature Importance plot",phen), x = "log10 p-value", y = "Importance") +
+    # geom_text_repel(force_pull = 2) +
+    annotate("label", x=max(wilcox_imp[[wilcox_ID]]), y=max(wilcox_imp[["MeanDecreaseGini"]])-.01, size = 3, label = paste("p= ", signif(cor$p.value, digits=3), sep="")) +
+    annotate("label", x=max(wilcox_imp[[wilcox_ID]]), y=max(wilcox_imp[["MeanDecreaseGini"]])-.05, size = 3, label = paste("Tau= ", signif(cor$estimate,digits=3), sep="")) +
+    
+    labs(title = paste("log10 p-value vs Feature Importance plot",phen), x = "log10 p-value", y = "log10 Importance") +
     theme(plot.title = element_text(size=22), axis.text=element_text(size=11),
           axis.title=element_text(size=15)) 
   
