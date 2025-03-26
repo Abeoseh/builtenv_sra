@@ -236,9 +236,7 @@ t_test_plot <- function(pco_df, pco){
                              pval_df$p_value <= 0.001 & pval_df$p_value > 0.0001 ~ "***",
                              pval_df$p_value <= 0.0001 ~ "****")
   
-  print(pval_df$stars)
-  # print(stats::pairwise.t.test(pco_df[[pco]], pco_df$Author)$p.value )
-  
+
   pco.plot = ggplot(pco_df, aes(Author, .data[[pco]])) +
     labs(title = paste(pco, "for",dfs_names[i], "samples")) +
     geom_boxplot(aes(color = Author)) +
@@ -266,64 +264,6 @@ for (i in 1:length(dfs)) {
 
   pco2_df <- data.frame(dfs[i]) %>% select(PCoA2, Author) %>% group_by(Author)
   t_test_plot(pco2_df, "PCoA2")  
-  
-  # # pairwise t-test
-  # # calculate p-values
-  # pval_df <- stats::pairwise.t.test(pco1_df$PCoA1, pco1_df$Author)$p.value %>% 
-  #   data.frame(check.names = FALSE) %>%
-  #   rownames_to_column("groups") %>%
-  #   pivot_longer(cols = -groups, names_to = "variable", values_to = "p_value") %>% na.omit() %>%
-  #   filter(p_value < 0.05)
-  # pval_df$p_value <- signif(pval_df$p_value, 3)
-  # pval_df = mutate(pval_df, groups = purrr::pmap(.l = list(groups, variable), .f = c))
-  # pval_df$stars <- case_when(pval_df$p_value < 0.05 & pval_df$p_value > 0.01 ~ "*",
-  #                            pval_df$p_value <= 0.01 & pval_df$p_value > 0.001 ~ "**",
-  #                            pval_df$p_value <= 0.001 & pval_df$p_value > 0.0001 ~ "***",
-  #                            pval_df$p_value <= 0.0001 ~ "****")
-  # 
-  # print(pval_df)
-  # print(stats::pairwise.t.test(pco1_df$PCoA1, pco1_df$Author)$p.value )
-  # 
-  # pco.plot = ggplot(pco1_df, aes(Author, PCoA1, color = Author)) +
-  #   labs(title = paste("PCo1 for",dfs_names[i])) +
-  #   geom_boxplot() +
-  #   geom_point() +
-  #   scale_color_manual(values = group.colors) +
-  #   geom_signif(comparisons = pval_df$groups, annotations = pval_df$stars, 
-  #               na.rm = TRUE, step_increase = 0.4) +
-  #   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
-  # 
-  # png(paste(output,"_combine_boxplot_pco1", dfs_names[i], ".png", sep=""))
-  # print(pco.plot)
-  # dev.off()
-  
-  
-  
-  
-  
-  # print("PCO2")
-  # pco2_df <- data.frame(dfs[i]) %>% select(PCoA2, Author) %>% group_by(Author)
-  # 
-  # # calculate p-values
-  # pval_df <- stats::pairwise.t.test(pco1_df$PCoA1, pco1_df$Author)$p.value %>% 
-  #   data.frame() %>%
-  #   rownames_to_column("groups") %>%
-  #   pivot_longer(cols = -groups, names_to = "variable", values_to = "p_value") %>% na.omit() %>%
-  #   filter(p_value < 0.05)
-  # pval_df$p_value <- signif(pval_df$p_value, 3)
-  # pval_df = mutate(pval_df, values = purrr::pmap(.l = list(groups, variable), .f = c))
-  # 
-  # # plot PCoA
-  # pco.plot = ggplot(pco2_df, aes(Author, PCoA2)) +
-  #   labs(title = paste("PCo2 for",dfs_names[i])) +
-  #   scale_color_manual(values = group.colors) +
-  #   geom_boxplot() +
-  #   geom_point() +
-  #   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
-  # 
-  # png(paste(output,"_combine_boxplot_pco2", dfs_names[i], ".png", sep=""))
-  # print(pco.plot)
-  # dev.off()
   
   print(paste("done with", dfs_names[i]))
 }
