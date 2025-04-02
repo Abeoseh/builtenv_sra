@@ -48,7 +48,7 @@ factors <- PCOA_df[,c(1,2,4)]
 
 meta = filter(factors, Author == IDs[1])
 
-perm_df <- adonis2(data_cols ~ Phenotype, meta, permutations = 1000) %>% as.data.frame()
+perm_df <- adonis2(data_cols ~ Phenotype, meta, permutations = 100000) %>% as.data.frame()
 perm_df$Author = IDs[1]
 print(paste("done with", IDs[1]))
 IDs = IDs[-c(1)]
@@ -60,7 +60,7 @@ for(ID in IDs){
 
   meta = filter(factors, Author == ID)
 
-  perm_df2 <- adonis2(data_cols ~ Phenotype, meta, permutations = 1000) %>% as.data.frame()
+  perm_df2 <- adonis2(data_cols ~ Phenotype, meta, permutations = 100000) %>% as.data.frame()
   perm_df2$Author = ID
   perm_df <- rbind(perm_df, perm_df2)
   print(paste("done with", ID))
@@ -81,7 +81,7 @@ meta <- PCOA_df[,c(1,2,4)]
 # print(perm)
 # print(summary(perm))
 
-perm_df <- adonis2(data_cols ~ Phenotype, method = "bray", meta, permutations = 1000, strata = meta$Study_ID) %>% as.data.frame()
+perm_df <- adonis2(data_cols ~ Phenotype, method = "bray", meta, permutations = 100000, strata = meta$Study_ID) %>% as.data.frame()
 
 
 write.csv(perm_df, paste(output,"_stratified_permanova.csv",sep=""))

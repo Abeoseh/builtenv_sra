@@ -71,7 +71,7 @@ roc.df <- rbind(roc.df, df)
 
 
 ## plot ROC of actual data
-p <- plot(rf_roc, add = FALSE, col = "red", print.auc = TRUE)
+p <- plot(rf_roc, add = FALSE, col = "red", print.auc = TRUE, print.auc.x = 0.17, print.auc.y = 0.09)
 phen <- filter(phenos, ID == IDs[i])
 phen <- phen[1,2]
 title(paste("Training without: ", phen, sep=""), line = + 2.5, cex.main=1.5)
@@ -99,7 +99,18 @@ title(paste("Training without: ", phen, sep=""), line = + 2.5, cex.main=1.5)
      roc.df <- rbind(roc.df, df)
 
      print(paste(j, " done", sep=""))
-     }
+}
+
+
+## bootstrap p-value 
+a <- auc.df[auc.df$Permutation == FALSE,]$AUC
+samp <- auc.df[auc.df$Permutation == TRUE,]$AUC
+for.pval = length(samp[samp >= a])/1000 
+
+## add p-value to ROC plot
+if (for.pval == 0){text(x = 0.1, y = 0.01, label = "p<0.001", col = "red")
+}else{text(x = 0.1, y = 0.01, label = paste("p=", signif(for.pval, 3),sep=""), col = "red")}
+
 p
 
 dev.off()  
@@ -109,10 +120,12 @@ auc.df$AUC <- as.numeric(auc.df$AUC)
 #### Histograms ####
 png(paste("./output/",output,"/plots/pre_DEBIAS-M_RF_lognorm_histogram_", IDs[i], ".png", sep=""))
 
-a <- auc.df[auc.df$Permutation == FALSE,]$AUC
-samp <- auc.df[auc.df$Permutation == TRUE,]$AUC
-z = (a-mean(samp))/(sd(samp)/sqrt(1))
-for.pval = pnorm(z, lower.tail = FALSE)
+## z-test p-value...using bootstrap p-value instead.
+# a <- auc.df[auc.df$Permutation == FALSE,]$AUC
+# samp <- auc.df[auc.df$Permutation == TRUE,]$AUC
+# z = (a-mean(samp))/(sd(samp)/sqrt(1))
+# for.pval = pnorm(z, lower.tail = FALSE)
+
 
 g <- ggplot() + geom_histogram(data = filter(auc.df, Permutation == TRUE), aes(x = AUC), bins = 40) +
   geom_vline(filter(auc.df, Permutation == FALSE), mapping = aes(xintercept=AUC), color = "cornflowerblue") +
@@ -136,9 +149,9 @@ dev.off()
 #                          main=paste("Variable Importance Plot ", "Training without: ", phen, sep=""))
 # dev.off()
 
-## as bar chart:
 
-# make dataframe from importance() output
+## as bar chart:
+## make dataframe from importance() output
 actual_cols = actual_cols[-c(1:3)] # Remove Sample, Study_ID, Phenotype
 
 feat_imp_df <- importance(RF_fit) %>% 

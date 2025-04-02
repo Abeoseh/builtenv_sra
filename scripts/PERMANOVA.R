@@ -17,9 +17,6 @@ suppressPackageStartupMessages(library(tibble))
 
 # sessionInfo()
 
-### IF statement explaination:
-# the images are arranged in 2x2 grids
-
 args = commandArgs(trailingOnly = TRUE)
 input = args[1]
 output = args[2]
@@ -42,6 +39,8 @@ PCOA_df = merge(PCOA_df, Studies, by.x = "Study_ID", by.y = "ID", all.x = T)
 PCOA_df = relocate(PCOA_df, Author)
 colnames(PCOA_df)[1:6]
 
+# PCOA_df = filter(PCOA_df, Study_ID != "PRJEB14474")
+
 IDs = unique(PCOA_df$Author)
 print("IDs:")
 print(IDs)
@@ -52,7 +51,7 @@ print(IDs)
 data_cols <- PCOA_df[,-c(1:6)]
 meta <- PCOA_df[,c(1,2,4)]
 
-perm_df <- adonis2(data_cols ~ Study_ID, method = "bray", meta, permutations = 1000) %>% as.data.frame()
+perm_df <- adonis2(data_cols ~ Study_ID, method = "bray", meta, permutations = 100000) %>% as.data.frame()
 write.csv(perm_df, paste(output,"_StudyID_permanova.csv",sep=""))
 
 ## Skin
@@ -60,7 +59,7 @@ data <- filter(PCOA_df, Phenotype == 1)
 data_cols <- data[,-c(1:6)]
 meta <- data[,c(1,2,4)]
 
-perm_df <- adonis2(data_cols ~ Study_ID, method = "bray", meta, permutations = 1000) %>% as.data.frame()
+perm_df <- adonis2(data_cols ~ Study_ID, method = "bray", meta, permutations = 100000) %>% as.data.frame()
 write.csv(perm_df, paste(output,"_StudyID_skin_permanova.csv",sep=""))
 
 ## environment
@@ -68,7 +67,7 @@ data <- filter(PCOA_df, Phenotype == 0)
 data_cols <- data[,-c(1:6)]
 meta <- data[,c(1,2,4)]
 
-perm_df <- adonis2(data_cols ~ Study_ID, method = "bray", meta, permutations = 1000) %>% as.data.frame()
+perm_df <- adonis2(data_cols ~ Study_ID, method = "bray", meta, permutations = 100000) %>% as.data.frame()
 write.csv(perm_df, paste(output,"_StudyID_environmental_permanova.csv",sep=""))
 
 
