@@ -15,7 +15,6 @@ for project in ${projects[@]}; do
 			fasterq-dump.exe $SRR -v --split-3 --outdir ../${project}/fastq
 			gzip ../${project}/fastq/${SRR}*
 			l="./$SRR"
-			echo $l
 			rm -rf $l
 		fi
 	done < ../${project}/SRR_Acc_List.txt

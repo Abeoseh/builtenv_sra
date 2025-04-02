@@ -198,6 +198,60 @@ png(paste("./output/",input,"/post_cluster_pngs/box_AUC_pval.png",sep=""), width
 grid.arrange(auc_b, pval_b, nrow = 1)
 dev.off()
 
+#### p-val vs importance plot ####
+
+suppressPackageStartupMessages(library(ggrepel))
+
+wilcox <- read.csv(paste("output/", input, "/pval_v_pval/files/wilcox_pval.csv", sep=""))
+IDs <- distinct(AUCs, Study_ID)$Study_ID
+
+
+for( ID in IDs){
+  feat_imp_df <- read.csv(paste("output/", input, "/CSVs/files/builtenv_pre_DEBIAS_",ID,"_featimp.csv", sep=""))
+
+
+  wilcox_ID <- paste("pval_", ID, sep="")
+  wilcox <- wilcox[, c("bacteria", wilcox_ID)]
+  wilcox <- na.omit(wilcox)
+
+  wilcox_imp <- merge(wilcox, feat_imp_df, by.x = "bacteria", by.y = "feature", all.x = TRUE)
+
+  xlims <- range(wilcox_imp[[wilcox_ID]])
+  xlims[1] <- xlims[1] - 10
+  xlims[2] <- xlims[2] + 10
+  ylims <- range(wilcox_imp[["MeanDecreaseGini"]])
+  ylims[1] <- ylims[1] - 10
+  ylims[2] <- ylims[2] + 10
+
+  plot <- ggplot(wilcox_imp, aes(x = .data[[wilcox_ID]], y = .data[["MeanDecreaseGini"]], label = bacteria)) +
+    geom_point() +
+    # geom_text(mapping = aes(label = bacteria)) + # remove label from ggplot() aes before you uncomment this line of code (2 lines up)
+    # geom_hline(yintercept=log10(0.05), linetype='dotted', col = 'red') +
+    # geom_hline(yintercept=-log10(0.05), linetype='dotted', col = 'red') +
+    geom_vline(xintercept=log10(0.05), linetype='dotted', col = 'red') +
+    geom_vline(xintercept=-log10(0.05), linetype='dotted', col = 'red') +
+    # adjust x and y limits
+    xlim(xlims) +
+    ylim(ylims) +
+    geom_text_repel(max.overlaps = 10, force_pull = 1, nudge_y = 1,size = 3) +
+    labs(title = paste("log10 p-value vs Feature Importance plot",phen), x = "log10 p-value", y = "Importance") +
+    theme(plot.title = element_text(size=22), axis.text=element_text(size=11),
+          axis.title=element_text(size=15)) 
+  
+  png(paste("./output/",output,"/plots/pre_pval_imp_", ID, ".png", sep=""), width = 1050, height = 480)
+  print(plot)
+  dev.off()
+
+
+}
+
+
+
+
+
+
+
+
 
 #### pcoa ####
 
