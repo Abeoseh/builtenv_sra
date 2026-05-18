@@ -30,8 +30,8 @@ Studies = read.csv("./csv_files/phenotypes.csv")
 print("Starting PERMANOVAs")
 
 
-PCOA_df = merge(PCOA_df, Studies, by.x = "Study_ID", by.y = "ID", all.x = T)
 
+PCOA_df = merge(PCOA_df, Studies, by.x = "Study_ID", by.y = "ID", all.x = T)
 PCOA_df = relocate(PCOA_df, Author)
 colnames(PCOA_df)[1:6]
 
@@ -42,62 +42,55 @@ print(IDs)
 data_cols <- filter(PCOA_df, Author == IDs[1])
 data_cols <- data_cols[,-c(1:6)]
 
-
+dim(data_cols)
 factors <- PCOA_df[,c(1,2,4)]
+dim(factors)
 
 
-meta = filter(factors, Author == IDs[1])
-
-perm_df <- adonis2(data_cols ~ Phenotype, meta, permutations = 100000) %>% as.data.frame()
-perm_df$Author = IDs[1]
-print(paste("done with", IDs[1]))
-IDs = IDs[-c(1)]
+perm_df <- data.frame()
 
 
-for(ID in IDs){
-  data_cols <- filter(PCOA_df, Author == !!ID)
-  data_cols <- data_cols[,-c(1:6)]
-
-  meta = filter(factors, Author == ID)
-
-  perm_df2 <- adonis2(data_cols ~ Phenotype, meta, permutations = 100000) %>% as.data.frame()
-  perm_df2$Author = ID
-  perm_df <- rbind(perm_df, perm_df2)
-  print(paste("done with", ID))
-}
-
-
-write.csv(perm_df, paste(output,"_individual_permanova.csv",sep=""))
-
-#### PERMANOVA with studies as a random term and phenotype as a fixed term
-
-
-data_cols <- PCOA_df[,-c(1:6)]
-print("TRUE %in% is.na(data_cols) ")
-print(TRUE %in% is.na(data_cols))
+#for(ID in IDs){
+#  data_cols <- filter(PCOA_df, Author == !!ID)
+#  data_cols <- data_cols[,-c(1:6)]
+#
+#  meta = filter(factors, Author == ID)
+#
+#  perm_df2 <- adonis2(data_cols ~ Phenotype, meta, permutations = 100000) %>% as.data.frame()
+#  perm_df2$Author = ID
+#  perm_df <- rbind(perm_df, perm_df2)
+#  print(paste("done with", ID))
+#}
+#
+#
+#write.csv(perm_df, paste(output,"_individual_permanova.csv",sep=""))
+#
+##### PERMANOVA with studies as a random term and phenotype as a fixed term
+#
+#
+#data_cols <- PCOA_df[,-c(1:6)]
+#print("TRUE %in% is.na(data_cols) ")
+#print(TRUE %in% is.na(data_cols))
 meta <- PCOA_df[,c(1,2,4)]
-
-# perm = adonis2(data_cols ~ Phenotype, method = "bray", meta, permutations = 1000, strata = meta$Study_ID)
-# print(perm)
-# print(summary(perm))
-
-perm_df <- adonis2(data_cols ~ Phenotype, method = "bray", meta, permutations = 100000, strata = meta$Study_ID) %>% as.data.frame()
-
-
-write.csv(perm_df, paste(output,"_stratified_permanova.csv",sep=""))
-
+#
+## perm = adonis2(data_cols ~ Phenotype, method = "bray", meta, permutations = 1000, strata = meta$Study_ID)
+## print(perm)
+## print(summary(perm))
+#
+#perm_df <- adonis2(data_cols ~ Phenotype, method = "bray", meta, permutations = 100000, strata = meta$Study_ID) %>% as.data.frame()
+#
+#
+#write.csv(perm_df, paste(output,"_stratified_permanova.csv",sep=""))
+#
 
 #### PERMANOVA of Study_ID
-
+print("starting PERMANOVA of Study ID")
 
 data_cols <- PCOA_df[,-c(1:7)]
 meta <- PCOA_df[,c(1,2,4)]
 
-# perm = adonis2(data_cols ~ Study_ID, method = "bray", meta, permutations = 1000)
-# print(perm)
-# print(summary(perm))
 
-perm_df <- adonis2(data_cols ~ Study_ID, method = "bray", meta, permutations = 1000) %>% as.data.frame()
+perm_df <- adonis2(data_cols ~ Study_ID, method = "bray", meta, permutations = 100000) %>% as.data.frame()
 
 
 write.csv(perm_df, paste(output,"_StudyID_permanova.csv",sep=""))
@@ -105,7 +98,7 @@ write.csv(perm_df, paste(output,"_StudyID_permanova.csv",sep=""))
 
 print("PERMANOVA finished, starting POCAs")
 
-#### POCA ####
+############ POCAs ############
 IDs = unique(PCOA_df$Study_ID)
 
 group.colors <- c(setNames("#880808",pheno1), setNames("#333BFF", pheno2))
@@ -146,12 +139,12 @@ pcoa <- function(df, chosen_title, pc = NULL){
     stat_ellipse(level = 0.95, aes(group = Phenotype, color = Phenotype)) +
 	  theme(plot.margin = margin(10, 10, 20, 10), plot.caption = element_text(hjust = 0)) +
     labs(title = str_wrap(chosen_title,30), x = paste("PCo1 (", round((eigenvalues[1] / sum(eigenvalues)) * 100, 2), "%)",sep=""), 
-        y = paste("PCo2 (", round((eigenvalues[2] / sum(eigenvalues)) * 100, 2),"%)",sep=""), color="Phenotype",
-        caption = paste("PERMANOVA p-value =", signif(perm_study[["Pr(>F)"]],2), "R2 =", round(perm_study$R2, 2)) )
+        y = paste("PCo2 (", round((eigenvalues[2] / sum(eigenvalues)) * 100, 2),"%)",sep=""), color="Sample Name",
+        caption = paste("PERMANOVA p-value =", signif(perm_study[["Pr(>F)"]],2), "R2 =", round(perm_study$R2, 3)) )
   return(pco.plot)
 }
 
-#### Individual PCOAs ####
+#### PCOA for each study colored by phenotype ####
 perm_df <- read.csv(paste(output,"_individual_permanova.csv",sep=""), row.names=1, check.names=F)
 for(i in 1:length(IDs)){
   post_DEBIAS <- filter(PCOA_df, Study_ID == IDs[i])
@@ -199,24 +192,26 @@ for(i in 1:length(IDs)){
     
   }
   if(i == length(IDs) & i%%4 != 0){
-    if(amount == 1){
+
+      if(amount == 1){
       png(paste(output,i ,".png", sep=""))
+      print(p1)
       dev.off()
-    }
-    if(amount == 2){
+      
+    } else if(amount == 2){
       png(paste(output,i-1,"-",i ,".png", sep=""))
       grid_arrange_shared_legend(p1, p2, ncol = 2, nrow = 2)
-      dev.off()  
-    }
-    else{
+      dev.off() 
+      
+    } else{
       png(paste(output,i-2,"-",i ,".png", sep=""))
       grid_arrange_shared_legend(p1, p2, p3, ncol = 2, nrow = 2)
+
       dev.off() 
     }
   }
   print(paste(i, " of ", length(IDs), " done ", sep = ""))
 }
-
 
 #### PCOA of all data colored by phenotype ####
 perm_df <- read.csv(paste(output,"_stratified_permanova.csv",sep=""), row.names=1, check.names=F)
@@ -260,13 +255,13 @@ pco.plot = ggplot(data = pcoa_val.df, mapping = aes(x = PCoA1, y = PCoA2)) +
   labs(title = "PCoA of Count data", x = paste("PCo1 (", round((eigenvalues[1] / sum(eigenvalues)) * 100, 2), "%)",sep=""), 
        y = paste("PCo2 (", round((eigenvalues[2] / sum(eigenvalues)) * 100, 2),"%)",sep=""),
        caption = paste("PERMANOVA p-value =", signif(perm_df[["Pr(>F)"]],2), "R2 =", round(perm_df$R2, 2)),
-       color="Phenotype" )
+       color="Sample Name" )
 
 png(paste(output,"_combine.png",sep=""))
 print(pco.plot)
 dev.off()
 
-#### PCOA of all data colored by Study ID ####
+#### PCOA of all data combine colored by Study ID ####
 perm_df <- read.csv(paste(output,"_StudyID_permanova.csv",sep=""), row.names=1, check.names=F)
 perm_df <- perm_df[1,]
 

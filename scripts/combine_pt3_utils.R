@@ -155,7 +155,7 @@ add_info_cols <- function(r, ref, col_names, study_ID, ref.df, undesirable = NUL
 
 
 sample_count <- function(data, metadata, pheno_col){
-	## Small function which counts the amount of samples from the metadata file present in combine_outs
+	## Small function which counts the amount of samples from the metadata file present in combine_otus
 	# data is combine_otus
 	# metadata is the SraRunTable
 	# Study_ID is the study_ID within combine
@@ -170,6 +170,19 @@ sample_count <- function(data, metadata, pheno_col){
 }
 
 
+#### add timepoint column (optional) ####
+ timepoint_col <- function(combine_otus, details_df, timepoint_column){
+
+  details_df <- details_df[details_df$sample_name %in% combine_otus$sample_name,]
+
+  combine_otus$timepoint[match(details_df$sample_name, combine_otus$sample_name)] <- details_df[[timepoint_column]]
+  
+
+  return(combine_otus)
+}
+
+
+
 #### log normalizing and getting into DEBIAS-M format ####
 lognorm <- function(table, dataframe, csv_file, filter = NULL, return_table = NULL){
   # actual lognorm
@@ -177,10 +190,12 @@ lognorm <- function(table, dataframe, csv_file, filter = NULL, return_table = NU
   table <- sweep(table,1,rowSums(table, na.rm = T),"/")
   table <- log10(table*avg + 1)
 
-  # add sample_name, Study_ID, Phenotype back   
-  table <- add_column(table, Study_ID=dataframe$Study_ID, .before = colnames(table)[1])
-  table <- add_column(table, Phenotype=dataframe$Phenotype, .before = colnames(table)[1])
-  table <- add_column(table, sample_name=dataframe$sample_name, .before = colnames(table)[1])
+  # add sample_name, Study_ID, Phenotype back 
+  table <- cbind(meta, table)
+  # table <- add_column(table, Study_ID=dataframe$Study_ID, .before = colnames(table)[1])
+  # table <- add_column(table, Phenotype=dataframe$Phenotype, .before = colnames(table)[1])
+  # table <- add_column(table, sample_name=dataframe$sample_name, .before = colnames(table)[1])
+  
   IDs <- distinct(table, Study_ID)$Study_ID
 
   # DEBIAS-M needs the study IDs to be labeled starting from 0 

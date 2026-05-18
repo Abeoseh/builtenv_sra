@@ -16,7 +16,7 @@ print(paste("input folder:",input))
 print(paste("output folder:",output))
 
 
-lognorm <- read.csv(paste("./csv_files/",input,"/lognorm_data.csv",sep=""), check.names=FALSE)
+lognorm <- read.csv(paste("./csv_files/",input,"/lognorm_data_na.csv",sep=""), check.names=FALSE)
 phenos <- read.csv("./csv_files/phenotypes.csv") # for naming the graphs
 IDs = distinct(lognorm, Study_ID)$Study_ID
 

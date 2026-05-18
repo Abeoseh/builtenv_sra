@@ -4,15 +4,19 @@
 #SBATCH --nodes=4
 #SBATCH --ntasks-per-node=8
 #SBATCH --mem-per-cpu=20GB
-#SBATCH -o ../logs/qiime2/%j_single.out # STDOUT
+#SBATCH -o ./logs/qiime2/%j_single.out # STDOUT
+mv ./logs/qiime2/${SLURM_JOB_ID}_single.out ./logs/qiime2/$1_single.out 
 
 echo "Start Time : $(date)"
 echo "folder: ${1}"
 
+echo "##############################################################################################"
+
+
 ## this file takes one positional argument: $1 which is the folder name containing the fastq folder and manifest file, it is assumed that the folder is the SRA project name
 ## folder qiime2_output needs to be made within $1
 
-module load qiime2/2024.2 
+module load qiime2/amplicon-2024.2 
 
 ## remove dada2 folder if it exists
 rm -rf /users/aflemis1/builtenv_sra/$1/qiime2_output/dada2
@@ -68,10 +72,12 @@ biom add-metadata \
 
 
 
-biom convert -i /users/aflemis1/builtenv_sra/$1/qiime2_output/dada2/taxonomy/biom-with-taxonomy.biom -o ../csv_files/combine/$1.txt --to-tsv --header-key taxonomy
+biom convert -i /users/aflemis1/builtenv_sra/$1/qiime2_output/dada2/taxonomy/biom-with-taxonomy.biom -o ./csv_files/combine/$1.txt --to-tsv --header-key taxonomy
 
  
  
-  
+echo "##############################################################################################"
+
 echo "script complete, for assigned taxnomy file check ../csv_files/combine/ for ${1}.txt"
 echo "End Time : $(date)"
+

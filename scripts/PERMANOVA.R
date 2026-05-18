@@ -39,7 +39,7 @@ PCOA_df = merge(PCOA_df, Studies, by.x = "Study_ID", by.y = "ID", all.x = T)
 PCOA_df = relocate(PCOA_df, Author)
 colnames(PCOA_df)[1:6]
 
-# PCOA_df = filter(PCOA_df, Study_ID != "PRJEB14474")
+PCOA_df = filter(PCOA_df, Study_ID != "PRJEB14474") ## if you uncomment this uncomment 
 
 IDs = unique(PCOA_df$Author)
 print("IDs:")
@@ -80,7 +80,8 @@ IDs = unique(PCOA_df$Study_ID)
 
 
 group.colors <- c(`Hospital: Lax et al. 2017` = "#880808", `Air Force: Sharma et al. 2019` = "#333BFF", 
-                  `Dorm: Richardson et al. 2019` = "#32a848", `House: Lax et al. 2014` = "#a832a8" ) # #8a8328 burnt yellow color
+                  `Dorm: Richardson et al. 2019` = "#32a848", `House: Lax et al. 2014` = "#a832a8", 
+                  `House: Wilkins et al. 2015` = "#808080") # #8a8328 burnt yellow color
 
 
 

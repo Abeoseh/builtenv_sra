@@ -1,63 +1,11 @@
-Directory Structure:
-
-```
-.
-|___ README.md
-|___fix_taxonomy.sbatch
-|___combine_pt2.sbatch
-|___combine_pt3.sbatch
-|___PCOA_PERMANOVA.sbatch
-|___pval-pval_plot.sbatch
-|
-|___project_info
-|   |___project_updates.pptx
-|
-|___scripts
-|   |___download_sra.sh
-|   |___sra.log
-|	|___mk_manifest.sh
-|   |___qiime2_single.slurm
-|   |___qiime2_paired.slurm
-|
-|___csv_files
-|   |___combine
-|        |___`counts with taxonomy (4 total)`
-|
-|___PRJEB33050
-|   |___PRJEB33050_SraRunTable.txt
-|   |___SRR_Acc_List.txt
-|   |___fastq
-|       |___`**all fastq files`
-|   |___qiime2_output
-|       |___`**qimme2 and dada2 output except counts with taxonomy`
-|
-|___PRJEB26708
-|   |___PRJEB26708_SraRunTable.txt
-|   |___SRR_Acc_List.txt
-|   |___fastq
-|       |___`**all fastq files`
-|   |___qiime2_output
-|       |___`**qimme2 and dada2 output except counts with taxonomy`
-|
-|___PRJEB6292 (not used due to no taxonomic assignment)
-|   |___PRJEB6292_SraRunTable.txt
-|   |___SRR_Acc_List.txt
-|   |___fastq
-|       |___`**all fastq files`
-|   |___qiime2_output
-|       |___`**qimme2 and dada2 output except counts with taxonomy`
-|
-|___PRJEB14474
-|   |___PRJEB14474_SraRunTable.txt
-|   |___SRR_Acc_List.txt
-|   |___fastq
-|       |___`**all fastq files`
-|   |___qiime2_output
-|       |___`**qimme2 and dada2 output except counts with taxonomy`
-
-```
-
 All initial fastq downloading was done locally. Afterwards, files were processed on the cluster.
+
+skin vs floor skin is 1 and floor is 0<br>
+skin vs skin associated: skin is 1 and skin associated is 0<br>
+skin associated vs floor: skin associated is 1 and floor is 0<br>
+
+*_longitudinal includes all timepoints, including ones where humans didn't inhabit that building (ex pre-opening for the hospital)<br>
+while the *_timepoints don't include pre-inhabiting timepoints
 
 
 **download_sra.sh**
@@ -107,19 +55,54 @@ ex:
 sbatch scripts/qiime2_paired.slurm PRJNA834026
 ```
 
+**fix_taxonomy.py**
+```
+assumes the file name (ex PRJEB11111.txt) is the same as the folder name with the qiime2 manifest.tsv
+
+How to run:
+scripts/fix_taxonomy.py
+output: single_*study name*.csv for all the studies
+
+```
+
+**./scripts/combine_pt2.R**
+```
+combines all the files from fix_taxonomy.py
+output combine_otus.csv
+
+ex:
+sbatch combine_pt2.sbatch
+```
 
 **./scripts/combine_pt3.R**
 ```
 $1 output folder name
 $2 first phenotype
 $3 second phenotype
-$4 (""/T) keep NA as NA
-./scripts/combine_pt3.R $1 $2 $3 $4
+$4 ""/T keep NA as NA
+$5 ""/T add a timepoint column
+./scripts/combine_pt3.R $1 $2 $3 $4 $5
 
 ex:
 sbatch combine_pt3.sbatch "associated" "skin associated" "floor associated" # results in NA values being coded as 0
 sbatch combine_pt3.sbatch "associated_na" "skin associated" "floor associated" "T" # results in NA staying as NA
+sbatch combine_pt3.sbatch skin_floor_timepoint skin floor "" T # results as NA values being coded as 0 ($4="") and a timepoint column added ($5=T)
 ```
+
+**./scripts/PERMANOVA.R**
+```
+Makes PERMANOVA plots for all samples, hand, and environmental samples. 
+$1 full input filepath including file name
+$2 full output filepath including filename without .png, but no error will occur if .png is given.
+$3 is pheno1 (hand)
+$4 is pheno2 (environmental)
+./scripts/PERMANOVA_PCOA.R $1 $2 $3 $4
+
+ex: 
+sbatch PERMANOVA_PCOA.sbatch ./csv_files/vetted_ontology/lognorm_data.csv ./output/PCOA/vetted
+sbatch PERMANOVA_PCOA.sbatch ./csv_files/vetted_ontology/lognorm_data.csv ./output/PCOA/vetted.png # the .png will be stripped of
+```
+
 **./scripts/PERMANOVA_PCOA.R**
 ```
 Makes PERMANOVA and POCA plots
@@ -151,9 +134,33 @@ $1 input folder (ensure it's located within ./csv_files)
 $2 output folder (ensure folder ./output is created)
 $3 amount of studies
 ./run_all.sh $1 $2 $3
-```
+
 ex:
 ./run_all.sh sink_nonsink sink_nonsink 4
+```
+
+**timepoint PCoAs**
+makes:
+- bar chart of R^2 for the PERMANOVA for sample type, time points, and ontology (original sample names before we merged them into hand, hand associated, and floor)
+  - NOTE: the ontology column is automatically created.
+- PCoAs for each time point colored by sample type
+- PCOA for each study colored by all time points 
+- PCOA for all studies together colored by sample name
+- PCOA between 0013/07 and other timepoints colored by phenotype (sample name) and timepoint
+
+``` 
+$1 input lognorm file
+$2 output path with file name (no extension)
+$3 pheno1 
+$4 pheno2 
+$5 Whether to do the PERMANOVAs again. There isn't a need to recalcualte them if they were already done. (/T)
+
+ex:
+sbatch timepoint_pcoa.sbatch ./csv_files/skinassoc_timepoint/lognorm_data_all.csv \
+./output/skinassoc_timepoint/PCOA/skinassoc hand "hand associated" # Doesn't recalculate the PERMANOVAs
+
+```
+
 
 Processing Notes:
 - PRJEB3232 and PRJEB3250: only have one read per spot.

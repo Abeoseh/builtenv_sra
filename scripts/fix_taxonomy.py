@@ -36,19 +36,35 @@ for file in files:
 
     # rename columns so all the files don't have the same file names 
     filename = file.split("/")[3].split(".")[0] 
+
+    if "-" in filename:
+        filename = filename.split("-")[0] 
+
     genus_column = df.pop("Genus")
-    print(filename)
+    # print(filename)
     
     # rename columns 
     rename = {}
     with open(f"./{filename}/manifest.tsv", "r") as file:
+        print(filename, "PRJEB11111" == filename)
+
+        i = 0
         for line in file:
+
+            
+               
 
             line = line.strip("\n")
             line = line.split("\t")
             line[1] = re.sub(r".+\/", "", line[1])
             line[1] = re.sub(r"\..+", "", line[1])
             line[1] = re.sub(r"\_.+", "", line[1])
+            line[1] = re.sub(r"-R1", "", line[1])
+
+            
+
+                
+            # print(line[1])
 
             rename[line[0]] = line[1]
 

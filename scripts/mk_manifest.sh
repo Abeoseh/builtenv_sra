@@ -3,26 +3,27 @@
 # print the folder name
 echo "positional argument 1 (input directory with fastq files): $1"
 echo "positional argument 2 (output directory):" $2
+echo "positional argument 2 (paired reads (True/False):" $3
 
 # remove the manifest if it exists
 if [ -f $2/manifest.tsv ] ; then
 	rm $2/manifest.tsv
 fi
 
+paired=$3
 
 i=1
 for fastq in "$1"/*; do
 	
 	# check if forward and reverse reads are present
-	if [[ "$fastq" == *"_"* ]]; then
-		forward="True"
+	if [[ "$paired" == *"rue" || "$paired" == "T"* ]]; then
 		# add file header
 		if [[ $i == 1 ]]; then
 			printf "sample-id\tforward-absolute-filepath\treverse-absolute-filepath" > $2/manifest.tsv
 
 		fi
 		# add sample ID and forward read
-		if [[ "$fastq" == *"_1"* ]]; then
+		if [[ "$fastq" == *"_1"* || "$fastq" == *"R1"* ]]; then
 			sample=""
 			sample="\nsample-$i\t$(realpath $fastq)\t" 
 			i=$(($i+1))
@@ -39,7 +40,7 @@ for fastq in "$1"/*; do
 		fi
 	fi
 	# if only forward reads
-	if [[ $forward == "" ]]; then
+	if [[ $paired == *"alse" || $forward == "F"* ]]; then
 		
 		# add file header
 		if [[ $i == "1" ]] ; then

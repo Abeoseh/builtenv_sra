@@ -3,7 +3,7 @@
 #SBATCH --partition=Orion
 #SBATCH --job-name=run_all_pt1
 #SBATCH --mem=100000
-#SBATCH --time=28:20:00
+#SBATCH --time=96:20:00
 #SBATCH --ntasks=2
 #SBATCH --ntasks-per-node=2
 #SBATCH --nodes 2
@@ -17,7 +17,7 @@ cd $SLURM_SUBMIT_DIR
 
 module load R # load modules
 
-Rscript scripts/random_forest_1.R $1 $2 $3 $4 &> ./output/$4/logs/run_rf_pre_$1.log 
+Rscript scripts/random_forest_1.R $1 $2 $3 $4 $5 &> ./output/$4/logs/run_rf_pre_$1_batch_$5.log 
 
 echo ""
 echo "======================================================"

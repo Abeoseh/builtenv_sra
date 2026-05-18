@@ -1,0 +1,11 @@
+*.out
+*.png
+*.csv
+*.pdf
+logs/
+output/
+PRJEB11111/
+PRJEB6292/
+PRJEB33050/
+PRJEB26708/
+PRJEB14474/

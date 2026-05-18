@@ -6,7 +6,7 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --mem=100000
-#SBATCH --time=48:20:00
+#SBATCH --time=96:20:00
 
 echo "======================================================"
 echo "Start Time : $(date)"
@@ -19,7 +19,7 @@ cd $SLURM_SUBMIT_DIR
 
 module load R # load modules
 
-Rscript scripts/random_forest_2.R $1 $2 $3 $4 &> ./output/$4/logs/run_rf_post_$3.log
+Rscript scripts/random_forest_2.R $1 $2 $3 $4 $5 &> ./output/$4/logs/run_rf_post_$3_batch_$5.log
 
 
 

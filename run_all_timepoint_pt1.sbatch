@@ -1,39 +1,25 @@
-#!/bin/bash 
+#!/bin/bash
+
 #SBATCH --partition=Orion
-#SBATCH --job-name=pval-pval
-#SBATCH --nodes=1
-#SBATCH --ntasks-per-node=1
-#SBATCH --time=10:00
-#SBATCH --mem-per-cpu=100000
+#SBATCH --job-name=run_all_pt1
+#SBATCH --mem=100000
+#SBATCH --time=96:20:00
+#SBATCH --ntasks=2
+#SBATCH --ntasks-per-node=2
+#SBATCH --nodes 2
 echo "======================================================"
 echo "Start Time : $(date)"
 echo "Submit Dir : $SLURM_SUBMIT_DIR"
 echo "Job ID/Name : $SLURM_JOBID / $SLURM_JOB_NAME"
 echo "Num Tasks : $SLURM_NTASKS total [$SLURM_NNODES nodes @ $SLURM_CPUS_ON_NODE CPUs/node]"
 echo "======================================================"
-echo "" cd $SLURM_SUBMIT_DIR
+cd $SLURM_SUBMIT_DIR
 
-module load R
+module load R # load modules
 
-
-if [ ! -d "./output/$2/pval_pval" ]; then
-	mkdir ./output/$2/pval_v_pval
-	mkdir ./output/$2/pval_v_pval/files
-
-fi
-
-if [ ! -d "./output/$2/logs" ]; then
-	mkdir ./output/$2/logs
-
-fi
-
-
-Rscript ./scripts/pval-pval_plot.R $1 $2 &> ./output/$2/logs/pval-pval_plot.log
-
+Rscript scripts/timepoint_random_forest.R $1 $2 $3 $4 $5 &> ./output/$4/logs/run_rf_pre_$1_batch_$5.log 
 
 echo ""
 echo "======================================================"
 echo "End Time : $(date)"
 echo "======================================================"
-
-
