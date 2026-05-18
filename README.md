@@ -44,7 +44,7 @@ How to run:
 - Change the projects in the array named "projects" to your desired project(s). 
         - The script assumes you named your folders with the project name. All of this can be changed.
 - Open command prompt and navigate to the scripts folder.
-- Run the following command: `download_sra.sh > sra.log 2>&1` 
+- Run the following command: `sh download_sra.sh > sra.log 2>&1` 
 - Output: a file in the scripts folder called sra.log which contains std error and std Output.
 
 

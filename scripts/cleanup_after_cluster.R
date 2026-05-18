@@ -7,6 +7,7 @@ library(ecodist)
 library(vegan)
 library(factoextra)
 library(lemon)
+library(stringr)
 
 #### ensure working directory is correct ####
 
@@ -15,32 +16,41 @@ setwd("C:/Users/brean/Downloads/masters/Fodor/builtenv_sra")
 getwd()
 
 # input folder, located within ./output
-input = "associated"
-input = "skin_skinassoc"
+input = "skin_floor_longitudinal"
+input = "associated_longitudinal"
+input = "skinassoc_longitudinal"
 
+input  = "timepoint/associated_timepoint/PCOA"
+input  = "timepoint/skin_floor_timepoint/PCOA"
+input  = "timepoint/skinassoc_timepoint/PCOA"
 
+input  = "timepoint/associated_timepoint"
+input  = "timepoint/skin_floor_timepoint"
+input  = "timepoint/skinassoc_timepoint"
 
 #### read in files ####
 
+dir.create(file.path(paste("./output/",input,sep=""), "post_cluster_pngs"), showWarnings = TRUE)
 
-AUCs <- read.csv(paste("./output/",input,"/AUCs/builtenv_AUCs.csv",sep=""), colClasses = c("DEBIAS" = "factor"))
+AUCs <- read.csv(paste("./output/",input,"/CSVs/builtenv_AUCs.csv",sep=""), colClasses = c("DEBIAS" = "factor"))
 
-# post_DEBIAS_files <- list.files("./cluster_runs/folder/DEBIAS-M_runs/",
-                          # pattern = "debiased_lognorm", full.names = TRUE) # debiased lognorm for pocas
+pval.df <- read.csv(paste("./output/",input,"/CSVs/builtenv_AUC_pvals.csv",sep=""), colClasses = c("DEBIAS" = "factor"))
+
+phenos <- read.csv("./csv_files/phenotypes.csv")
+
+IDs <- unique(AUCs$Study_ID)
+
+post_DEBIAS_files <- list.files(paste("./output/", input ,"/DEBIAS-M_runs/", sep=""),
+                                pattern = "debiased_lognorm", full.names = TRUE) # debiased lognorm for pocas
 
 # debias_weights_files <- list.files(paste("./output/",input,"/DEBIAS-M_runs/",sep=""),
                                    # pattern = "debias_weights", full.names = TRUE)
-phenos <- read.csv("./csv_files/phenotypes.csv")
 
-
-pval.df <- read.csv(paste("./output/",input,"/AUCs/builtenv_AUC_pvals.csv",sep=""), colClasses = c("DEBIAS" = "factor"))
-
-IDs <- distinct(AUCs, Study_ID)$Study_ID
 
 
 #### Optional: Fix AUC df ####
-# if there is a problems with the combined AUCs use this to combine the individual AUCs
-a = list.files("./cluster_runs/folder/csv_files/AUCs/semi_leaky_cancer/",
+# if there is a problems with the combined AUCs use; this to combine the individual AUCs
+a = list.files("./cluster_runs/folder/csv_files/CSVs/semi_leaky_cancer/",
                pattern = "cancer_post_", full.names = TRUE)
 
 post_AUCs = read.csv(a[1])
@@ -50,7 +60,7 @@ for(i in 2:length(a)){
 }
 
 AUCs = rbind(AUCs, post_AUCs)
-write.csv(AUCs, "./cluster_runs/folder/csv_files/AUCs/semi_leaky_cancer/cancer_semi_leaky_AUCs.csv", row.names = FALSE)
+write.csv(AUCs, "./cluster_runs/folder/csv_files/CSVs/semi_leaky_cancer/cancer_semi_leaky_AUCs.csv", row.names = FALSE)
 
 
 #### Optional: histograms and p-val df ####
@@ -112,33 +122,57 @@ hist_pdf <- function(input_folder, pattern, output_folder){
   
 }
 
+# PCoAs
+hist_pdf(paste("./output/",input,"/PCOA_RandomForestDataset",sep="") ,"png", paste("./output/",input,"/post_cluster_pngs/associated_images.pdf",sep=""))
+hist_pdf(paste("./output/",input,"/PCOA",sep="") ,"png", paste("./output/",input,"/post_cluster_pngs/skin_floor_images.pdf",sep=""))
+hist_pdf(paste("./output/",input,"/PCOA",sep="") ,"png", paste("./output/",input,"/post_cluster_pngs/skinassoc_images.pdf",sep=""))
+
+# timepoint ROCs 
+hist_pdf(paste("./output/",input,"/plots",sep="") ,"png", paste("./output/",input,"/post_cluster_pngs/associated_ROC.png",sep=""))
+hist_pdf(paste("./output/",input,"/plots",sep="") ,"png", paste("./output/",input,"/post_cluster_pngs/skin_floor_ROC.pdf",sep=""))
+hist_pdf(paste("./output/",input,"/plots",sep="") ,"png", paste("./output/",input,"/post_cluster_pngs/skinassoc_ROC.pdf",sep=""))
+
 # pre, ROC
-hist_pdf(paste("./output/",input,"/ROC_histograms",sep="") ,"pre_DEBIAS-M_RF_lognorm_ROC", paste("./output/",input,"/post_cluster_pngs/ROC_pre_100_perm.png",sep=""))
+hist_pdf(paste("./output/",input,"/plots",sep="") ,"pre_DEBIAS-M_RF_lognorm_ROC", paste("./output/",input,"/post_cluster_pngs/ROC_pre_100_perm.png",sep=""))
 
 # pre hist
-hist_pdf(paste("./output/",input,"/ROC_histograms",sep=""), "pre_DEBIAS-M_RF_lognorm_hist", paste("./output/",input,"/post_cluster_pngs/hist_pre_100_perm.png",sep=""))
+hist_pdf(paste("./output/",input,"/plots",sep=""), "pre_DEBIAS-M_RF_lognorm_hist", paste("./output/",input,"/post_cluster_pngs/hist_pre_100_perm.png",sep=""))
 
 # pre var importance BARS
-hist_pdf(paste("./output/",input,"/ROC_histograms",sep=""), "pre_var_importance_bars", paste("./output/",input,"/post_cluster_pngs/pre_var_impor_bars.png",sep=""))
+hist_pdf(paste("./output/",input,"/plots",sep=""), "pre_var_importance_bars", paste("./output/",input,"/post_cluster_pngs/pre_var_impor_bars.png",sep=""))
 
 # pre var importance 
-hist_pdf(paste("./output/",input,"/ROC_histograms",sep=""), "pre_var_importance_P", paste("./output/",input,"/post_cluster_pngs/pre_var_impor.png",sep=""))
+hist_pdf(paste("./output/",input,"/plots",sep=""), "pre_var_importance_P", paste("./output/",input,"/post_cluster_pngs/pre_var_impor.png",sep=""))
 
 # post, ROC
-hist_pdf(paste("./output/",input,"/ROC_histograms",sep=""), "post_DEBIAS-M_RF_lognorm_ROC", paste("./output/",input,"/post_cluster_pngs/ROC_post_100_perm.png",sep=""))
+hist_pdf(paste("./output/",input,"/plots",sep=""), "post_DEBIAS-M_RF_lognorm_ROC", paste("./output/",input,"/post_cluster_pngs/ROC_post_100_perm.png",sep=""))
 
 # post hist
-hist_pdf(paste("./output/",input,"/ROC_histograms",sep=""), "post_DEBIAS-M_RF_lognorm_hist", paste("./output/",input,"/post_cluster_pngs/hist_post_100_perm.png",sep=""))
+hist_pdf(paste("./output/",input,"/plots",sep=""), "post_DEBIAS-M_RF_lognorm_hist", paste("./output/",input,"/post_cluster_pngs/hist_post_100_perm.png",sep=""))
 
 # pre var importance BARS
-hist_pdf(paste("./output/",input,"/ROC_histograms",sep=""), "post_var_importance_bars", paste("./output/",input,"/post_cluster_pngs/post_var_impor_bars.png",sep=""))
+hist_pdf(paste("./output/",input,"/plots",sep=""), "post_var_importance_bars", paste("./output/",input,"/post_cluster_pngs/post_var_impor_bars.png",sep=""))
 
 # pre var importance 
-hist_pdf(paste("./output/",input,"/ROC_histograms",sep=""), "post_var_importance_P", paste("./output/",input,"/post_cluster_pngs/post_var_impor.png",sep=""))
+hist_pdf(paste("./output/",input,"/plots",sep=""), "post_var_importance_P", paste("./output/",input,"/post_cluster_pngs/post_var_impor.png",sep=""))
 
 
 
+diff_auc <- data.frame("pre" = t_auc$AUC[t_auc$DEBIAS == FALSE],
+                       "post" = t_auc$AUC[t_auc$DEBIAS == TRUE],
+                       "diff_auc" = t_auc$AUC[t_auc$DEBIAS == TRUE] - t_auc$AUC[t_auc$DEBIAS == FALSE])
+data <- diff_auc <- data.frame("diff_auc" = t_auc$AUC[t_auc$DEBIAS == TRUE] - t_auc$AUC[t_auc$DEBIAS == FALSE])
+diff_auc <- data$diff_auc
 
+
+
+fit <- brm(diff_auc ~ 1, data = data, family = gaussian(), 
+           prior = c(prior(normal(0, 1), class = "Intercept"),
+                     prior(exponential(1), class = "sigma")),
+           iter = 4000, warmup = 1000, chains = 4, seed = 42)
+
+posterior <- posterior_samples(fit)
+mean(posterior$b_Intercept > 0)
 
 
 #### box plots and t-test ####
@@ -148,8 +182,22 @@ hist_pdf(paste("./output/",input,"/ROC_histograms",sep=""), "post_var_importance
 
 # t-test between baseline and semi-leaky: t = 0.03496, df = 3, p-value = 0.9743
 
-t_auc = AUCs %>% filter(Permutation == FALSE) %>% select(DEBIAS, AUC) 
-with(t_auc, t.test(AUC[DEBIAS == FALSE], AUC[DEBIAS == TRUE], alternative = "two.sided", paired = TRUE))
+t_auc = AUCs %>% filter(Permutation == FALSE) %>% select(DEBIAS, AUC)
+
+### this is useful if all of the AUCs are listed as DEBIAS==FALSE
+# v <- c(6, 2, 8, 7)
+# t_auc$DEBIAS <- as.character(t_auc$DEBIAS)
+# t_auc$DEBIAS[v] <- "post"
+# t_auc$DEBIAS <- as.factor(t_auc$DEBIAS)
+# 
+# AUCs <- AUCs %>% filter(Permutation == FALSE)
+# AUCs$DEBIAS <- as.character(AUCs$DEBIAS)
+# AUCs$DEBIAS[v] <- "post"
+AUCs$DEBIAS <- as.factor(AUCs$DEBIAS)
+
+
+## T-test
+results <- with(t_auc, wilcox.test(AUC[DEBIAS == "post"], AUC[DEBIAS == "pre"], alternative = "greater", paired = TRUE))
 
 # next three lines are only needed if i have phenotypes to add...I do
 # AUCs$DEBIAS <- as.numeric(levels(AUCs$DEBIAS))[(AUCs$DEBIAS)]
@@ -157,12 +205,19 @@ selected_AUCs <- AUCs %>% filter(Permutation == FALSE) %>% merge(y = phenos, by.
 # selected_AUCs$phenotype[grep("cancer", selected_AUCs$phenotype)] <- "cancer"
 
 
-auc_b <- ggplot(selected_AUCs, mapping = aes(x=as.factor(DEBIAS), y=AUC)) + 
+
+group.colors <- c(`Hospital: Lax et al. 2017` = "#880808", `Air Force: Sharma et al. 2019` = "#333BFF", 
+                  `Dorm: Richardson et al. 2019` = "#32a848", `House: Lax et al. 2014` = "#a832a8" ) # #8a8328 burnt yellow color
+
+auc_b <- ggplot(selected_AUCs, mapping = aes(x=factor(DEBIAS, levels = c("pre", "post")), y=AUC)) + 
   geom_boxplot(fill = "darkgrey") + 
   geom_point(aes(color = as.factor(Author)), alpha = 1) +
- scale_color_brewer(name = "Author", palette = "Paired", guide = "none") +
+  scale_color_manual(values = group.colors, guide = "none") +
+ # scale_color_brewer(name = "Author", palette = "Paired", guide = "none") +
   scale_x_discrete(labels = c("Before DEBIAS-M", "After DEBIAS-M")) +
-  labs(x = "", title = "AUCs before and after DEBIAS-M") +
+  labs(x = "", title = "AUCs before and after DEBIAS-M",
+       caption = paste("pval:", signif(results$p.value, 2)), 
+       color = "Author") +
   ylim(0.4, 1.0) +
 #  geom_signif(annotation = "*",
 #              y_position = 0.95, xmin = 2, xmax = 3) +
@@ -176,18 +231,22 @@ auc_b
 # t-test between baseline and semi-leay: t = 1, df = 3, p-value = 0.391
 
 t_pval = pval.df %>% select(DEBIAS, pval) 
-with(t_pval, t.test(pval[DEBIAS == FALSE], pval[DEBIAS == TRUE], alternative = "two.sided", paired = TRUE))
+results <- with(t_pval, t.test(pval[DEBIAS == "pre"], pval[DEBIAS == "post"], alternative = "less", paired = TRUE))
 
 # pval.df$DEBIAS <- as.numeric(levels(pval.df$DEBIAS))[(pval.df$DEBIAS)]
 pval.df <- pval.df %>% merge(y = phenos, by.x = "Study_ID", by.y = "ID", all.x = TRUE) %>% arrange(desc(DEBIAS))
 #pval.df$phenotype[grep("cancer", selected_AUCs$phenotype)] <- "cancer"
 
-pval_b <- ggplot(pval.df, mapping = aes(x = as.factor(DEBIAS), y = log(pval, base = 10))) + 
+pval_b <- ggplot(pval.df, mapping = aes(x=factor(DEBIAS, levels = c("pre", "post")), y = pval)) + 
   geom_boxplot(fill = "darkgrey") + 
   geom_point(aes(color = as.factor(Author)), alpha = 1) +
-  scale_color_brewer(name = "Author", palette = "Paired") +
+  scale_color_manual(values = group.colors) +
+  # scale_color_brewer(name = "Author", palette = "Paired") +
   scale_x_discrete(labels = c("Before DEBIAS-M", "After DEBIAS-M")) +
-  labs(x = "", y = "log10 p-value", title = "p-values before and after DEBIAS-M") +
+  labs(x = "", y = "p-value", title = "p-values before and after DEBIAS-M",
+       caption = paste("pval:", signif(results$p.value, 2)),
+       color = "Author") +
+  
 #  geom_signif(annotation = "**",
 #              y_position = 1, xmin = 2, xmax = 3) +
   theme_minimal() 
@@ -251,13 +310,37 @@ for( ID in IDs){
 
 
 
-
-
 #### pcoa ####
 
 pcoa <- function(df, chosen_title, pc = NULL){
+  ## PERMANOVA
+  output_pcoa_path = paste("./output/",input,"/post_cluster_pngs/pcoa_post_DEBIAS_",IDs[i] ,".csv", sep="")
+  
+  if(file.exists(output_pcoa_path)){
+    print(paste("PERMANOVA file found for", IDs[i]))
+    perm_df <- read.csv(output_pcoa_path, check.names = F)
+    } else{
+    print(paste("no PERMANOVA file found for", IDs[i]))
+    permanova_df <- merge(df, phenos, by.x = "Study_ID", by.y = "ID", all.x = TRUE)
+    permanova_df <- relocate(permanova_df, Author)
+    
+    factors <- permanova_df[,c(1,2)]
+    data_cols <- permanova_df[,-c(1:2)]
+    
+    
+    perm_df <- adonis2(data_cols ~ Author, factors, permutations = 100000) %>% as.data.frame()
+    write.csv(perm_df, output_pcoa_path, row.names=F)
+    }
+  
+  rownames(df) <- make.names(df$Study_ID, unique = TRUE)
+  rownames(df) <- gsub("^X", "", rownames(df))
+  
+  df <- select(df, !Study_ID)
+  
   bray <- vegdist(df, method = "bray")
   pcoa_val <- pco(bray, negvals = "zero", dround = 0)
+  
+  
   
   if(!is.null(pc)){
     
@@ -271,18 +354,26 @@ pcoa <- function(df, chosen_title, pc = NULL){
     return(list(bray, pcoa_val))
   }
   
+  
   pco.labels = lapply(row.names(pcoa_val$vectors), function(x) unlist(strsplit(x, split = ".", fixed=TRUE))[1]) # remove .numbers from the end of the row names
   pcoa_val.df = data.frame(Study_ID = unlist(pco.labels),
                            PCoA1 = pcoa_val$vectors[,1], 
                            PCoA2 = pcoa_val$vectors[,2])
   
   pcoa_val.df = merge(pcoa_val.df, phenos, by.x = "Study_ID", by.y = "ID", all.x = TRUE)
-  pcoa_val.df$phenotype[grep("cancer", pcoa_val.df$phenotype)] = "cancer"
+  print("Author" %in% colnames(pcoa_val.df))
+  eigenvalues <- pcoa_val$values
   
   pco.plot <- ggplot(data = pcoa_val.df, mapping = aes(x = PCoA1, y = PCoA2)) + 
-    geom_point(aes(col = as.factor(phenotype)), alpha = 0.7) +
-    scale_color_brewer(name = "phenotype", palette = "Paired") +
-    labs(title = chosen_title, x = "PC1", y = "PC2")
+    geom_point(aes(col = as.factor(Author)), alpha = 0.7) +
+    scale_color_manual(values = group.colors) +
+    stat_ellipse(level = 0.95, aes(group = Author, color = Author)) + 
+    labs(title = str_wrap(chosen_title,30), 
+         x = paste("PCo1 (", round((eigenvalues[1] / sum(eigenvalues)) * 100, 2), "%)",sep=""), 
+         y = paste("PCo2 (", round((eigenvalues[2] / sum(eigenvalues)) * 100, 2),"%)",sep=""), 
+         color="Author",
+         caption = paste("PERMANOVA p-value =", signif(perm_df[["Pr(>F)"]][1],2), "R2 =", round(perm_df$R2, 2)) ) + 
+    guides(color=guide_legend(nrow=2))
   return(pco.plot)
 }
 
@@ -293,53 +384,55 @@ pcoa <- function(df, chosen_title, pc = NULL){
 
 # pd = post_DEBIAS_files
 
+group.colors <- c(`Hospital: Lax et al. 2017` = "#880808", `Air Force: Sharma et al. 2019` = "#333BFF", 
+                  `Dorm: Richardson et al. 2019` = "#32a848", `House: Lax et al. 2014` = "#a832a8" ) # #8a8328 burnt yellow color
+
 for(i in 1:length(post_DEBIAS_files)){
   post_DEBIAS <- read.csv(post_DEBIAS_files[i])
-  rownames(post_DEBIAS) <- make.names(post_DEBIAS$Study_ID, unique = TRUE)
-  rownames(post_DEBIAS) <- gsub("^X", "", rownames(post_DEBIAS))
+  
   
   if((i+1)%%2 == 0 & (i+1)%%4 != 0){
-    p1 = pcoa(post_DEBIAS[4:length(post_DEBIAS)], paste("PCoA on ", IDs[i], " post count data.", sep = ""))
+    p1 = pcoa(post_DEBIAS[3:length(post_DEBIAS)], paste("PCoA after testing on ", phenos$Author[phenos$ID == IDs[i]], sep = ""))
     print(paste(i, "p1"))
     amount = 1}
-
+  
   if(i%%2 == 0 & i%%4 != 0){
-    p2 = pcoa(post_DEBIAS[4:length(post_DEBIAS)], paste("PCoA on ", IDs[i], " post count data", sep = ""))
+    p2 = pcoa(post_DEBIAS[3:length(post_DEBIAS)], paste("PCoA after testing on ", phenos$Author[phenos$ID == IDs[i]], sep = ""))
     print(paste(i, "p2"))
     amount = amount + 1}
-
+  
   if((i+1)%%4 == 0){
-    p3 = pcoa(post_DEBIAS[4:length(post_DEBIAS)], paste("PCoA on ", IDs[i], " post count data", sep = ""))
+    p3 = pcoa(post_DEBIAS[3:length(post_DEBIAS)], paste("PCoA after testing on ", phenos$Author[phenos$ID == IDs[i]], sep = ""))
     print(paste(i, "p3"))
     amount = amount + 1}
   
   if(i%%4 == 0){
-    p4 = pcoa(post_DEBIAS[4:length(post_DEBIAS)], paste("PCoA on ", IDs[i], " post count data", sep = ""))
+    p4 = pcoa(post_DEBIAS[3:length(post_DEBIAS)], paste("PCoA after testing on ", phenos$Author[phenos$ID == IDs[i]], sep = ""))
     print(paste(i, "p4"))
     amount = 0
     
-    png(paste("./output/subset/pcoa_post_DEBIAS",i-3,"-",i ,".png", sep=""))
+    png(paste("./output/",input,"/post_cluster_pngs/pcoa_post_DEBIAS",i-3,"-",i ,".png", sep=""))
     grid_arrange_shared_legend(p1, p2, p3, p4, ncol = 2, nrow = 2)
     dev.off()
     
-   }
+  }
   if(i == length(post_DEBIAS_files) & i%%4 != 0){
     if(amount == 1){
-    png(paste("./output/autism/pcoa_post_DEBIAS",i ,".png", sep=""))
-    dev.off()
+      png(paste("./output/",input,"/post_cluster_pngs/pcoa_post_DEBIAS",i ,".png", sep=""))
+      dev.off()
     }
-    if(amount == 2){
-      png(paste("./output/autism/pcoa_post_DEBIAS",i-1,"-",i ,".png", sep=""))
+    else if(amount == 2){
+      png(paste("./output/",input,"/post_cluster_pngs/pcoa_post_DEBIAS",i-1,"-",i ,".png", sep=""))
       grid_arrange_shared_legend(p1, p2, ncol = 2, nrow = 2)
       dev.off()  
     }
     else{
-    png(paste("./output/autism/pcoa_post_DEBIAS",i-2,"-",i ,".png", sep=""))
-    grid_arrange_shared_legend(p1, p2, p3, ncol = 2, nrow = 2)
-    dev.off() 
+      png(paste("./output/",input,"/post_cluster_pngs/pcoa_post_DEBIAS",i-2,"-",i ,".png", sep=""))
+      grid_arrange_shared_legend(p1, p2, p3, ncol = 2, nrow = 2)
+      dev.off() 
     }
   }
-  print(paste(i, " of ", length(pd), " done ", sep = ""))
+  print(paste(i, " of ", length(post_DEBIAS_files), " done ", sep = ""))
 }
 
 #### PCA weights ####
